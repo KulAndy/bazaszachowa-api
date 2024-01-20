@@ -1,7 +1,7 @@
 const SETTINGS = {
   admin: "",
   adminContact: "",
-  host: "l",
+  host: "",
   user: "",
   password: "",
   base: "",
