@@ -38,8 +38,8 @@ const BASE = {
     nameFul = nameFul.replace(/,$/g, "");
     nameFul = nameFul.replace(/\s+/g, " ");
     nameFul = nameFul.replace(/ *$/g, "");
-    nameFul = nameFul.replace(/(^| |')\w{0,2}($| |')/g, "");
-    nameFul = "+" + nameFul.replace(/ +/g, " +");
+    nameFul = nameFul.replace(/\b\w{0,2}\b/g, "");
+    nameFul = "+" + nameFul.trim().replace(/ +/g, " +");
     nameFul = nameFul.trim();
     let query = `SELECT
       fideid,
@@ -89,11 +89,9 @@ const BASE = {
         result[i].fullname = result[i].fullname.replace(/,$/g, "");
         result[i].fullname = result[i].fullname.replace(/\s+/g, " ");
         result[i].fullname = result[i].fullname.replace(/ *$/g, "");
-        result[i].fullname = result[i].fullname.replace(
-          /(^| |')\w{0,2}($| |')/g,
-          ""
-        );
-        result[i].fullname = "+" + result[i].fullname.replace(/ +/g, " +");
+        result[i].fullname = result[i].fullname.replace(/\b\w{0,2}\b/g, "");
+        result[i].fullname =
+          "+" + result[i].fullname.trim().replace(/ +/g, " +");
         result[i].fullname = result[i].fullname.trim();
       }
     }
@@ -155,10 +153,10 @@ const BASE = {
       fulltextPlayer = fulltextPlayer.replace(/\s+/g, " ");
       fulltextPlayer = fulltextPlayer.replace(/ *$/g, "");
       fulltextPlayer = fulltextPlayer.replace(/-/g, " ");
-      fulltextPlayer = fulltextPlayer.replace(/(^| |')\w{0,2}($| |')/g, "");
+      fulltextPlayer = fulltextPlayer.replace(/\b\w{0,2}\b/g, "");
       fulltextPlayer = fulltextPlayer.trim();
 
-      fulltextPlayer = "+" + fulltextPlayer.replace(/ +/g, " +").trim();
+      fulltextPlayer = "+" + fulltextPlayer.trim().replace(/ +/g, " +").trim();
     }
 
     return await this.execSearch(query, [fulltextPlayer, player]);
@@ -191,7 +189,7 @@ const BASE = {
         fulltextPlayer = fulltextPlayer.substring(1);
       }
 
-      fulltextPlayer = "+" + fulltextPlayer.replace(/ /g, " +").trim();
+      fulltextPlayer = "+" + fulltextPlayer.trim().replace(/ +/g, " +").trim();
     }
     let params = [fulltextPlayer, player];
     if (color == "white") {
@@ -229,7 +227,7 @@ const BASE = {
         .replace(/ +[a-z0-9\.]\.* +/i)
         .replace(/ +[a-z0-9\.]$/i, "");
       fulltextPlayer = fulltextPlayer.replace(/\.|-/g, " ");
-      fulltextPlayer = "+" + fulltextPlayer.replace(/ +/g, " +").trim();
+      fulltextPlayer = "+" + fulltextPlayer.trim().replace(/ +/g, " +").trim();
     }
     let query = `
 SELECT max(WhiteElo) as maxElo, min(Year) as minYear, max(Year) as maxYear
@@ -256,16 +254,15 @@ AND t1.fullname like ?     `;
   },
   async eloHistory(player, base = "all") {
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
+    fulltextPlayer.replace(/\b\w\b/i, "");
     if (fulltextPlayer.split(" ").length > 1) {
-      if (fulltextPlayer[1] == "'" || (fulltextPlayer[1] == "`") == "'") {
-        fulltextPlayer = fulltextPlayer.substring(1);
+      if (["'", "`"].includes(fulltextPlayer[1])) {
+        fulltextPlayer = fulltextPlayer.slice(2);
       }
-
-      fulltextPlayer = fulltextPlayer
-        .replace(/ +[a-z0-9\.]\.* +/i)
-        .replace(/ +[a-z0-9\.]$/i, "");
-      fulltextPlayer = fulltextPlayer.replace(/\.|-/g, " ");
-      fulltextPlayer = "+" + fulltextPlayer.replace(/ +/g, " +").trim();
+      fulltextPlayer = fulltextPlayer.replace(/-/g, " ");
+      fulltextPlayer = fulltextPlayer.replace(/\s+/g, " ");
+      fulltextPlayer = "+" + fulltextPlayer.replace(/\b\w{0,2}\b/g, "");
+      fulltextPlayer = fulltextPlayer.trim().replace(/ +/g, " +");
       let query = `
             SELECT Elo, Year, Month FROM (
                 SELECT MAX(Elo) as Elo, Year, Month FROM(
@@ -324,6 +321,7 @@ AND t1.fullname like ?     `;
         SETTINGS.fidePlayers
       } WHERE MATCH(name) AGAINST(? in boolean mode)
     `;
+
       return await this.execSearch(query, [
         fulltextPlayer,
         player,
@@ -476,9 +474,8 @@ AND t1.fullname like ?     `;
             }
             white = white.replace(/-/g, " ");
             white = white.replace(/\s+/g, " ");
-            white =
-              "+" +
-              white.replace(/(^| |')\w{0,2}($| |')/g, "").replace(/ /g, " +");
+            white = "+" + white.replace(/\b\w{0,2}\b/g, "");
+            white = white.trim().replace(/ +/g, " +");
             query += ` whiteid = (SELECT id FROM ${playersTable} WHERE  match(fullname) against(? in boolean mode) AND fullname like ? ) `;
             params.push(white);
             params.push(obj.white);
@@ -502,7 +499,10 @@ AND t1.fullname like ?     `;
             black = black.replace(/\s+/g, " ");
             black =
               "+" +
-              black.replace(/(^| |')\w{0,2}($| |')/g, "").replace(/ /g, " +");
+              black
+                .replace(/\b\w{0,2}\b/g, "")
+                .trim()
+                .replace(/ +/g, " +");
             query += ` blackid = (SELECT id FROM ${playersTable} WHERE  match(fullname) against(? in boolean mode) AND fullname like ? ) `;
             params.push(black);
             params.push(obj.black);
