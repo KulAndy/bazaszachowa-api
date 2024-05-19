@@ -25,22 +25,26 @@ const BASE = {
     });
   },
 
-  async fideData(name) {
+  fulltextName(name) {
     let nameFul;
-    if (name[1] == "'" || name[1] == "`") {
+    if (name[0] == "'" || name[0] == "`") {
       nameFul = name.substring(1);
     } else {
       nameFul = name;
     }
-    nameFul = nameFul.replace(/'|-/g, " ");
-    nameFul = nameFul.replace(/ \w?\.*$/g, "");
-    nameFul = nameFul.replace(/\(.*/g, "");
-    nameFul = nameFul.replace(/,$/g, "");
+    nameFul = nameFul.replace(/[^a-zA-Z0-9\s]/g, "");
+    nameFul = nameFul.replace(/\b\w{1,2}\b/g, "");
     nameFul = nameFul.replace(/\s+/g, " ");
-    nameFul = nameFul.replace(/ *$/g, "");
-    nameFul = nameFul.replace(/\b\w{0,2}\b/g, "");
-    nameFul = "+" + nameFul.trim().replace(/ +/g, " +");
     nameFul = nameFul.trim();
+    nameFul = nameFul
+      .split(" ")
+      .map((word) => "+" + word)
+      .join(" ");
+    return nameFul;
+  },
+
+  async fideData(name) {
+    let nameFul = this.fulltextName(name);
     let query = `SELECT
       fideid,
       name,
@@ -80,19 +84,7 @@ const BASE = {
     }
     if (forFulltext) {
       for (let i = 0; i < result.length; i++) {
-        if (result[i].fullname[1] == "'" || result[i].fullname[1] == "`") {
-          result[i].fullname = result[i].fullname.substring(1);
-        }
-        result[i].fullname = result[i].fullname.replace(/'|-/g, " ");
-        result[i].fullname = result[i].fullname.replace(/ \w?\.*$/g, "");
-        result[i].fullname = result[i].fullname.replace(/\(.*/g, "");
-        result[i].fullname = result[i].fullname.replace(/,$/g, "");
-        result[i].fullname = result[i].fullname.replace(/\s+/g, " ");
-        result[i].fullname = result[i].fullname.replace(/ *$/g, "");
-        result[i].fullname = result[i].fullname.replace(/\b\w{0,2}\b/g, "");
-        result[i].fullname =
-          "+" + result[i].fullname.trim().replace(/ +/g, " +");
-        result[i].fullname = result[i].fullname.trim();
+        result[i].fullname = this.fulltextName(result[i].fullname.trim());
       }
     }
     result = [...new Set(result)];
@@ -143,20 +135,7 @@ const BASE = {
         ORDER by COUNT(*) DESC, opening`;
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
     if (fulltextPlayer.split(" ").length > 1) {
-      if (fulltextPlayer[1] == "'" || fulltextPlayer[1] == "`") {
-        fulltextPlayer = fulltextPlayer.substring(1);
-      }
-      fulltextPlayer = fulltextPlayer.replace(/'/g, " ");
-      fulltextPlayer = fulltextPlayer.replace(/ \w?\.*$/g, "");
-      fulltextPlayer = fulltextPlayer.replace(/\(.*/g, "");
-      fulltextPlayer = fulltextPlayer.replace(/,$/g, "");
-      fulltextPlayer = fulltextPlayer.replace(/\s+/g, " ");
-      fulltextPlayer = fulltextPlayer.replace(/ *$/g, "");
-      fulltextPlayer = fulltextPlayer.replace(/-/g, " ");
-      fulltextPlayer = fulltextPlayer.replace(/\b\w{0,2}\b/g, "");
-      fulltextPlayer = fulltextPlayer.trim();
-
-      fulltextPlayer = "+" + fulltextPlayer.trim().replace(/ +/g, " +").trim();
+      fulltextPlayer = this.fulltextName(fulltextPlayer);
     }
 
     return await this.execSearch(query, [fulltextPlayer, player]);
@@ -185,11 +164,7 @@ const BASE = {
 `;
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
     if (fulltextPlayer.split(" ").length > 1) {
-      if (fulltextPlayer[1] == "'" || (fulltextPlayer[1] == "`") == "'") {
-        fulltextPlayer = fulltextPlayer.substring(1);
-      }
-
-      fulltextPlayer = "+" + fulltextPlayer.trim().replace(/ +/g, " +").trim();
+      fulltextPlayer = this.fulltextName(fulltextPlayer);
     }
     let params = [fulltextPlayer, player];
     if (color == "white") {
@@ -219,15 +194,7 @@ const BASE = {
   async minMaxYearEco(player, base) {
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
     if (fulltextPlayer.split(" ").length > 1) {
-      if (fulltextPlayer[1] == "'" || (fulltextPlayer[1] == "`") == "'") {
-        fulltextPlayer = fulltextPlayer.substring(1);
-      }
-
-      fulltextPlayer = fulltextPlayer
-        .replace(/ +[a-z0-9\.]\.* +/i)
-        .replace(/ +[a-z0-9\.]$/i, "");
-      fulltextPlayer = fulltextPlayer.replace(/\.|-/g, " ");
-      fulltextPlayer = "+" + fulltextPlayer.trim().replace(/ +/g, " +").trim();
+      fulltextPlayer = this.fulltextName(fulltextPlayer);
     }
     let query = `
 SELECT max(WhiteElo) as maxElo, min(Year) as minYear, max(Year) as maxYear
@@ -254,15 +221,8 @@ AND t1.fullname like ?     `;
   },
   async eloHistory(player, base = "all") {
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
-    fulltextPlayer.replace(/\b\w\b/i, "");
     if (fulltextPlayer.split(" ").length > 1) {
-      if (["'", "`"].includes(fulltextPlayer[1])) {
-        fulltextPlayer = fulltextPlayer.slice(2);
-      }
-      fulltextPlayer = fulltextPlayer.replace(/-/g, " ");
-      fulltextPlayer = fulltextPlayer.replace(/\s+/g, " ");
-      fulltextPlayer = "+" + fulltextPlayer.replace(/\b\w{0,2}\b/g, "");
-      fulltextPlayer = fulltextPlayer.trim().replace(/ +/g, " +");
+      fulltextPlayer = this.fulltextName(fulltextPlayer);
       let query = `
             SELECT Elo, Year, Month FROM (
                 SELECT MAX(Elo) as Elo, Year, Month FROM(
@@ -467,50 +427,20 @@ AND t1.fullname like ?     `;
       left join ${ecoTable} on ${gamesTable}.ecoID = ${ecoTable}.id
         WHERE `;
         if (whiteLike) {
-          white.replace(/\b\w\b/i, "");
-          if (white.split(" ").length > 1) {
-            if (["'", "`"].includes(white[1])) {
-              white = white.slice(2);
-            }
-            white = white.replace(/-/g, " ");
-            white = white.replace(/\s+/g, " ");
-            white = "+" + white.replace(/\b\w{0,2}\b/g, "");
-            white = white.trim().replace(/ +/g, " +");
-            query += ` whiteid = (SELECT id FROM ${playersTable} WHERE  match(fullname) against(? in boolean mode) AND fullname like ? ) `;
-            params.push(white);
-            params.push(obj.white);
-          } else {
-            query += ` whiteid = (SELECT id FROM ${playersTable} WHERE  match(fullname) against(?) AND fullname like ? ) `;
-            params.push(white);
-            params.push(white);
-          }
+          white = this.fulltextName(obj.white);
+          query += ` whiteid = (SELECT id FROM ${playersTable} WHERE  match(fullname) against(? in boolean mode) AND fullname like ? ) `;
+          params.push(white);
+          params.push(obj.white);
         }
 
         if (blackLike) {
           if (whiteLike) {
             query += " and ";
           }
-          black.replace(/\b\w\b/i, "");
-          if (black.split(" ").length > 1) {
-            if (["'", "`"].includes(black[1])) {
-              black = black.slice(2);
-            }
-            black = black.replace(/-/g, " ");
-            black = black.replace(/\s+/g, " ");
-            black =
-              "+" +
-              black
-                .replace(/\b\w{0,2}\b/g, "")
-                .trim()
-                .replace(/ +/g, " +");
-            query += ` blackid = (SELECT id FROM ${playersTable} WHERE  match(fullname) against(? in boolean mode) AND fullname like ? ) `;
-            params.push(black);
-            params.push(obj.black);
-          } else {
-            query += ` blackid = (SELECT id FROM ${playersTable} WHERE  match(fullname) against(?) AND fullname like ? ) `;
-            params.push(black);
-            params.push(black);
-          }
+          black = this.fulltextName(obj.black);
+          query += ` blackid = (SELECT id FROM ${playersTable} WHERE  match(fullname) against(? in boolean mode) AND fullname like ? ) `;
+          params.push(black);
+          params.push(obj.black);
         }
 
         if (!(minYear == 1475 && maxYear == new Date().getFullYear())) {
