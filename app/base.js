@@ -26,11 +26,11 @@ const BASE = {
   },
 
   fulltextName(name) {
-    let nameFul;
-    if (name[0] == "'" || name[0] == "`") {
-      nameFul = name.substring(1);
+    let nameFul = name.replace(/[`'-]/g, " ");
+    if (nameFul[0] == "'" || nameFul[0] == "`") {
+      nameFul = nameFul.substring(1);
     } else {
-      nameFul = name;
+      nameFul = nameFul;
     }
     nameFul = nameFul.replace(/[^a-zA-Z0-9\s]/g, "");
     nameFul = nameFul.replace(/\b\w{1,2}\b/g, "");
