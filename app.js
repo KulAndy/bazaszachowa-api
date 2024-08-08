@@ -5,6 +5,8 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const fs = require("fs");
 const cron = require("node-cron");
+const zlib = require("zlib");
+const { pipeline, Transform } = require("stream");
 
 const app = express();
 const port = 3000;
@@ -119,7 +121,12 @@ app.all("/graph/:format/:player", async (req, res) => {
           res.setHeader("Content-Type", "image/jpeg");
           res.send(result);
         })
-        .catch((error) => res.send(null));
+        .catch((error) => {
+          res.status(404).json(null);
+          console.log("====================================");
+          console.error(error);
+          console.log("====================================");
+        });
     } else if (format == "svg") {
       DRAWER.eloSVG(elo_history, player)
         .then((result) => {
@@ -127,7 +134,7 @@ app.all("/graph/:format/:player", async (req, res) => {
           res.send(result);
         })
         .catch((error) => {
-          res.status(503).json(null);
+          res.status(404).json(null);
           console.log("====================================");
           console.error(error);
           console.log("====================================");
@@ -227,7 +234,7 @@ app.post("/send-email", (req, res) => {
   upload(req, res, (err) => {
     if (err) {
       console.log("====================================");
-      console.log(err);
+      console.error(err);
       console.log("====================================");
       return res.status(400).send("Error uploading file");
     }
@@ -267,7 +274,7 @@ app.post("/send-email", (req, res) => {
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.log("====================================");
-        console.log(error);
+        console.error(error);
         console.log("====================================");
         return res.status(500).send(error.toString());
       }
@@ -276,6 +283,53 @@ app.post("/send-email", (req, res) => {
       }
       res.send("Email sent: " + info.response);
     });
+  });
+});
+
+app.all("/download/:base", (req, res) => {
+  const base = req.params.base;
+
+  if (!base) {
+    return res.status(400).send("Bad request: Missing base parameter.");
+  }
+
+  const gzip = zlib.createGzip({ level: zlib.constants.Z_BEST_COMPRESSION });
+
+  res.setHeader("Content-Disposition", 'attachment; filename="base.pgn.gz"');
+  res.setHeader("Content-Type", "application/gzip");
+
+  const query = BASE.getGames(base);
+  const stream = query.stream({ highWaterMark: 10000 });
+
+  const transformStream = new Transform({
+    readableObjectMode: false,
+    writableObjectMode: true,
+    transform(chunk, encoding, callback) {
+      const row = chunk;
+      const rowData = `[Event "${row.Event}"]
+  [Site "${row.Site}"]
+  [Date "${row.Year}.${
+        row.Month ? row.Month.toString().padStart(2, "0") : "??"
+      }.${row.Day ? row.Day.toString().padStart(2, "0") : "??"}"]
+  [Round "${row.Round}"]
+  [White "${row.White}"]
+  [Black "${row.Black}"]
+  [Result "${row.Result}"]
+  [ECO "${row.ECO}"]
+  [WhiteElo "${row.WhiteElo || 0}"]
+  [BlackElo "${row.BlackElo || 0}"]
+  
+  ${row.moves}
+  `;
+      callback(null, rowData);
+    },
+  });
+
+  pipeline(stream, transformStream, gzip, res, (err) => {
+    if (err) {
+      console.error("Error during streaming:", err);
+      res.status(500).send("An error occurred while streaming data.");
+    }
   });
 });
 

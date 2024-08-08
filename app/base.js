@@ -119,6 +119,24 @@ const BASE = {
     return await this.execSearch(query);
   },
 
+  getGames(base) {
+    let playersTable =
+      base === "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
+
+    let table = base === "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
+    let query = `SELECT
+          moves, ${SETTINGS.eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${table}.Year, ${table}.Month, ${table}.Day, Round, 
+          t1.fullname as White, t2.fullname as Black, Result, WhiteElo, BlackElo, ${SETTINGS.ecoTable}.ECO as ECO
+          FROM ${table}
+          INNER JOIN ${playersTable} as t1 on WhiteID = t1.id
+          INNER JOIN ${playersTable} as t2 on BlackID = t2.id
+          LEFT JOIN ${SETTINGS.eventsTable} on ${table}.EventID = ${SETTINGS.eventsTable}.id
+          LEFT JOIN ${SETTINGS.sitesTable} on ${table}.siteID = ${SETTINGS.sitesTable}.id
+          LEFT JOIN ${SETTINGS.ecoTable} on ${table}.ecoID = ${SETTINGS.ecoTable}.id`;
+
+    return db.query(query);
+  },
+
   async playerOpeningStatsColor(player, color) {
     let query = `SELECT opening,
         COUNT(*) as count,
@@ -248,7 +266,7 @@ AND t1.fullname like ?     `;
                         }.fullname) against(? in boolean mode) AND Month is not null AND WhiteElo is not null AND ${
         base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
       }.fullname like ?
-                        UNION DISTINCT
+                        UNION
                         SELECT BlackElo as Elo, Year, Month FROM ${
                           base == "poland"
                             ? SETTINGS.polandTable
@@ -332,7 +350,7 @@ AND t1.fullname like ?     `;
     let params = [];
     if (searching == "classic") {
       if (whiteLike || blackLike) {
-        query = `SELECT DISTINCT
+        query = `SELECT
           ${gamesTable}.id, moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
           Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO   
           FROM ${gamesTable}
@@ -372,7 +390,7 @@ AND t1.fullname like ?     `;
 
         if (ignore) {
           query += `UNION
-          SELECT DISTINCT
+          SELECT
           ${gamesTable}.id, moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
           Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO   
           FROM ${gamesTable}
@@ -416,7 +434,7 @@ AND t1.fullname like ?     `;
       }
     } else if (searching == "fulltext") {
       if (white || black) {
-        query = `SELECT DISTINCT
+        query = `SELECT
         ${gamesTable}.id, moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
         Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO   
         FROM ${gamesTable}
@@ -462,7 +480,7 @@ AND t1.fullname like ?     `;
 
         if (ignore) {
           query += `UNION
-          SELECT DISTINCT
+          SELECT
           ${gamesTable}.id, moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
           Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO   
           FROM ${gamesTable}
