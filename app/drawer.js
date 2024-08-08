@@ -230,6 +230,14 @@ const DRAWER = {
     let minElo = 4000,
       maxElo = 0;
 
+    if (!data || data.length < 2) {
+      throw new Error("No data for elo curve");
+    }
+    data = data.filter((item) => item.Month);
+    if (data.length < 2) {
+      throw new Error("No data for elo curve");
+    }
+
     for (let i = 0; i < data.length; i++) {
       if (i == 0) {
         initialRating = data[i];
