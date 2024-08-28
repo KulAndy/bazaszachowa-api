@@ -217,7 +217,7 @@ const BASE = {
         params.push(opening);
       }
       query +=
-        "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black";
+        "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black LIMIT 10000";
     } else if (color == "black") {
       query += `
         WHERE t2.fullname like ?
@@ -230,7 +230,7 @@ const BASE = {
         params.push(opening);
       }
       query +=
-        "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black";
+        "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black LIMIT 10000";
     }
     return await this.execSearch(query, params);
   },
