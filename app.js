@@ -121,11 +121,8 @@ app.all("/graph/:format/:player", async (req, res) => {
           res.setHeader("Content-Type", "image/jpeg");
           res.send(result);
         })
-        .catch((error) => {
+        .catch(() => {
           res.status(404).json(null);
-          console.log("====================================");
-          console.error(error);
-          console.log("====================================");
         });
     } else if (format == "svg") {
       DRAWER.eloSVG(elo_history, player)
@@ -133,17 +130,14 @@ app.all("/graph/:format/:player", async (req, res) => {
           res.setHeader("Content-Type", "image/svg+xml");
           res.send(result);
         })
-        .catch((error) => {
+        .catch(() => {
           res.status(404).json(null);
-          console.log("====================================");
-          console.error(error);
-          console.log("====================================");
         });
     } else {
-      res.status(400).send(null);
+      res.status(400).json(null);
     }
   } else {
-    res.status(400);
+    res.status(400).json(null);
   }
 });
 
@@ -306,21 +300,22 @@ app.all("/download/:base", (req, res) => {
     writableObjectMode: true,
     transform(chunk, encoding, callback) {
       const row = chunk;
-      const rowData = `[Event "${row.Event}"]
-  [Site "${row.Site}"]
-  [Date "${row.Year}.${
+      const rowData = `
+[Event "${row.Event}"]
+[Site "${row.Site}"]
+[Date "${row.Year}.${
         row.Month ? row.Month.toString().padStart(2, "0") : "??"
       }.${row.Day ? row.Day.toString().padStart(2, "0") : "??"}"]
-  [Round "${row.Round}"]
-  [White "${row.White}"]
-  [Black "${row.Black}"]
-  [Result "${row.Result}"]
-  [ECO "${row.ECO}"]
-  [WhiteElo "${row.WhiteElo || 0}"]
-  [BlackElo "${row.BlackElo || 0}"]
+[Round "${row.Round}"]
+[White "${row.White}"]
+[Black "${row.Black}"]
+[Result "${row.Result}"]
+[ECO "${row.ECO}"]
+[WhiteElo "${row.WhiteElo || 0}"]
+[BlackElo "${row.BlackElo || 0}"]
   
-  ${row.moves}
-  `;
+${row.moves}
+`;
       callback(null, rowData);
     },
   });
@@ -329,6 +324,12 @@ app.all("/download/:base", (req, res) => {
     if (err) {
       console.error("Error during streaming:", err);
       res.status(500).send("An error occurred while streaming data.");
+    } else {
+      stream.destroy();
+      transformStream.destroy();
+      if (global.gc) {
+        global.gc();
+      }
     }
   });
 });
