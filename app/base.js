@@ -13,16 +13,12 @@ const BASE = {
     return new Promise((data) => {
       db.query(query, params, function (error, result) {
         if (error) {
-          console.log("|" + JSON.stringify(params) + "|");
-          console.log(query);
           data([]);
           throw error;
         }
         try {
           data(result);
         } catch (error) {
-          console.log("|" + JSON.stringify(params) + "|");
-          console.log(query);
           data([]);
           throw error;
         }
