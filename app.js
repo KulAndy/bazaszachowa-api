@@ -5,8 +5,6 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const fs = require("fs");
 const cron = require("node-cron");
-const zlib = require("zlib");
-const { pipeline, Transform } = require("stream");
 
 const app = express();
 const port = 3000;
@@ -16,6 +14,7 @@ const RESOURCES = require("./app/resources.js");
 const BASE = require("./app/base.js");
 const DRAWER = require("./app/drawer.js");
 const SETTINGS = require("./app/settings.js");
+const CHESS = require("./app/chess.js");
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -81,12 +80,18 @@ app.all("/game/:base/:id", (req, res) => {
     const base = req.params.base;
     const id = req.params.id;
     BASE.getGame(id, base)
+      .then((result) =>
+        result.map((item) => ({
+          ...item,
+          moves: CHESS.movesBin2obj(item.moves),
+        }))
+      )
       .then((result) => res.json(result))
       .catch((error) => {
         res.status(400).send([
           {
             id: 12347922,
-            moves: "1. *",
+            moves: [],
             Event: null,
             Site: null,
             Year: null,
@@ -177,6 +182,12 @@ app.all("/search_game", (req, res) => {
     }
     if (params.white || params.black) {
       BASE.searchGames(params)
+        .then((result) =>
+          result.map((item) => ({
+            ...item,
+            moves: CHESS.movesBin2obj(item.moves),
+          }))
+        )
         .then((result) => {
           res.json({ table: params.table || "all", rows: result });
         })
@@ -200,6 +211,12 @@ app.all("/search_player_opening_game/:player/:color/:opening?", (req, res) => {
   const opening = req.params.opening || null;
   if (["white", "black"].includes(color)) {
     BASE.searchPlayerOpeningGame(player, color, opening)
+      .then((result) =>
+        result.map((item) => ({
+          ...item,
+          moves: CHESS.movesBin2obj(item.moves),
+        }))
+      )
       .then((result) => res.json(result))
       .catch((error) => {
         res.status(503).json([]);
@@ -277,60 +294,6 @@ app.post("/send-email", (req, res) => {
       }
       res.send("Email sent: " + info.response);
     });
-  });
-});
-
-app.all("/download/:base", (req, res) => {
-  const base = req.params.base;
-
-  if (!base) {
-    return res.status(400).send("Bad request: Missing base parameter.");
-  }
-
-  const gzip = zlib.createGzip({ level: zlib.constants.Z_BEST_COMPRESSION });
-
-  res.setHeader("Content-Disposition", 'attachment; filename="base.pgn.gz"');
-  res.setHeader("Content-Type", "application/gzip");
-
-  const query = BASE.getGames(base);
-  const stream = query.stream({ highWaterMark: 10000 });
-
-  const transformStream = new Transform({
-    readableObjectMode: false,
-    writableObjectMode: true,
-    transform(chunk, encoding, callback) {
-      const row = chunk;
-      const rowData = `
-[Event "${row.Event}"]
-[Site "${row.Site}"]
-[Date "${row.Year}.${
-        row.Month ? row.Month.toString().padStart(2, "0") : "??"
-      }.${row.Day ? row.Day.toString().padStart(2, "0") : "??"}"]
-[Round "${row.Round}"]
-[White "${row.White}"]
-[Black "${row.Black}"]
-[Result "${row.Result}"]
-[ECO "${row.ECO}"]
-[WhiteElo "${row.WhiteElo || 0}"]
-[BlackElo "${row.BlackElo || 0}"]
-  
-${row.moves}
-`;
-      callback(null, rowData);
-    },
-  });
-
-  pipeline(stream, transformStream, gzip, res, (err) => {
-    if (err) {
-      console.error("Error during streaming:", err);
-      res.status(500).send("An error occurred while streaming data.");
-    } else {
-      stream.destroy();
-      transformStream.destroy();
-      if (global.gc) {
-        global.gc();
-      }
-    }
   });
 });
 

@@ -109,11 +109,11 @@ const BASE = {
 
     let table = base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
     let query = `SELECT
-    ${table}.id, moves, ${SETTINGS.eventsTable}.name as Event, ${
+    ${table}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${
       SETTINGS.sitesTable
     }.site as Site, ${table}.Year, ${table}.Month, ${table}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo,${
       SETTINGS.ecoTable
-    }.ECO as  ECO   
+    }.ECO as  ECO
     FROM ${table}
     inner join ${playersTable} as t1 on WhiteID = t1.id
     inner join ${playersTable} as t2 on BlackID = t2.id
@@ -127,24 +127,6 @@ const BASE = {
     WHERE ${table}.id = ${parseInt(id)}
     `;
     return await this.execSearch(query);
-  },
-
-  getGames(base) {
-    let playersTable =
-      base === "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
-
-    let table = base === "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
-    let query = `SELECT
-          moves, ${SETTINGS.eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${table}.Year, ${table}.Month, ${table}.Day, Round, 
-          t1.fullname as White, t2.fullname as Black, Result, WhiteElo, BlackElo, ${SETTINGS.ecoTable}.ECO as ECO
-          FROM ${table}
-          INNER JOIN ${playersTable} as t1 on WhiteID = t1.id
-          INNER JOIN ${playersTable} as t2 on BlackID = t2.id
-          LEFT JOIN ${SETTINGS.eventsTable} on ${table}.EventID = ${SETTINGS.eventsTable}.id
-          LEFT JOIN ${SETTINGS.sitesTable} on ${table}.siteID = ${SETTINGS.sitesTable}.id
-          LEFT JOIN ${SETTINGS.ecoTable} on ${table}.ecoID = ${SETTINGS.ecoTable}.id`;
-
-    return db.query(query);
   },
 
   async playerOpeningStatsColor(player, color) {
@@ -187,13 +169,13 @@ const BASE = {
   },
 
   async searchPlayerOpeningGame(player, color = null, opening = null) {
-    let query = `            
+    let query = `
     SELECT
-        ${SETTINGS.allTable}.id, moves, ${SETTINGS.eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${SETTINGS.allTable}.Year, ${SETTINGS.allTable}.Month, ${SETTINGS.allTable}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${SETTINGS.ecoTable}.ECO   
+        ${SETTINGS.allTable}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${SETTINGS.allTable}.Year, ${SETTINGS.allTable}.Month, ${SETTINGS.allTable}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${SETTINGS.ecoTable}.ECO
         FROM ${SETTINGS.allTable}
         inner join ${SETTINGS.allPlayers} as t1 on WhiteID = t1.id
         inner join ${SETTINGS.allPlayers} as t2 on BlackID = t2.id
-        LEFT join ${SETTINGS.eventsTable} on ${SETTINGS.allTable}.EventID = ${SETTINGS.eventsTable}.id        
+        LEFT join ${SETTINGS.eventsTable} on ${SETTINGS.allTable}.EventID = ${SETTINGS.eventsTable}.id
         LEFT join ${SETTINGS.sitesTable} on ${SETTINGS.allTable}.siteID = ${SETTINGS.sitesTable}.id
         LEFT JOIN ${SETTINGS.ecoTable} on ${SETTINGS.allTable}.ecoID = ${SETTINGS.ecoTable}.ID
 `;
@@ -257,7 +239,7 @@ WHERE t1.fullname like ?`;
     query += `
 UNION
 SELECT max(BlackElo) as maxElo, min(Year) as minYear, max(Year) as maxYear
-FROM ${base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable}  
+FROM ${base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable}
 inner join ${
       base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
     } as t1 on BlackID = t1.id
@@ -342,7 +324,7 @@ WHERE t1.fullname like ?     `;
   },
 
   async searchGames(obj) {
-    var searching = obj.searching || "classic";
+    const searching = obj.searching || "classic";
     let table;
     let white;
     let black;
@@ -382,12 +364,12 @@ WHERE t1.fullname like ?     `;
     if (searching == "classic") {
       if (whiteLike || blackLike) {
         query = `SELECT
-          ${gamesTable}.id, moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
-          Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO   
+          ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
+          Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO
           FROM ${gamesTable}
           inner join ${playersTable} as t1 on WhiteID = t1.id
           inner join ${playersTable} as t2 on BlackID = t2.id
-          left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id                                    
+          left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id
           LEFT join ${SETTINGS.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.sitesTable}.id
         left join ${ecoTable} on ${gamesTable}.ecoID = ${ecoTable}.id
           WHERE `;
@@ -422,12 +404,12 @@ WHERE t1.fullname like ?     `;
         if (ignore) {
           query += `UNION
           SELECT
-          ${gamesTable}.id, moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
-          Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO   
+          ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
+          Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO
           FROM ${gamesTable}
           inner join ${playersTable} as t1 on WhiteID = t1.id
           inner join ${playersTable} as t2 on BlackID = t2.id
-          left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id                                    
+          left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id
           LEFT join ${SETTINGS.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.sitesTable}.id
         left join ${ecoTable} on ${gamesTable}.ecoID = ${ecoTable}.id
           WHERE `;
@@ -466,12 +448,12 @@ WHERE t1.fullname like ?     `;
     } else if (searching == "fulltext") {
       if (white || black) {
         query = `SELECT
-        ${gamesTable}.id, moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
-        Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO   
+        ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
+        Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO
         FROM ${gamesTable}
         inner join ${playersTable} as t1 on WhiteID = t1.id
         inner join ${playersTable} as t2 on BlackID = t2.id
-        left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id                                    
+        left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id
         LEFT join ${SETTINGS.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.sitesTable}.id
       left join ${ecoTable} on ${gamesTable}.ecoID = ${ecoTable}.id
         WHERE `;
@@ -520,12 +502,12 @@ WHERE t1.fullname like ?     `;
         if (ignore) {
           query += `UNION
           SELECT
-          ${gamesTable}.id, moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
-          Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO   
+          ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
+          Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO
           FROM ${gamesTable}
           inner join ${playersTable} as t1 on WhiteID = t1.id
           inner join ${playersTable} as t2 on BlackID = t2.id
-          left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id                                    
+          left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id
           LEFT join ${SETTINGS.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.sitesTable}.id
         left join ${ecoTable} on ${gamesTable}.ecoID = ${ecoTable}.id
           WHERE `;
