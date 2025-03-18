@@ -70,16 +70,11 @@ const CHESS = {
   PIECES: ["p", "n", "b", "r", "q", "k", null],
 
   movesBin2obj: (blob) => {
-    console.log(blob);
-
     const bytes = new Uint8Array(blob);
     const result = [];
 
-    console.log(bytes);
-
     for (let i = 0; i < bytes.length; i += 2) {
       const packed = (bytes[i] << 8) | bytes[i + 1];
-      console.log(packed);
 
       const b1 = (packed >> 10) & 0x3f;
       const b2 = (packed >> 4) & 0x3f;
@@ -87,8 +82,6 @@ const CHESS = {
 
       try {
         const move = { from: CHESS.SQUARES[b1], to: CHESS.SQUARES[b2] };
-
-        console.log(CHESS.PIECES[b3]);
 
         if (CHESS.PIECES[b3]) {
           move.promotion = CHESS.PIECES[b3];
