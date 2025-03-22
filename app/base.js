@@ -250,63 +250,41 @@ WHERE t1.fullname like ?     `;
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
     if (fulltextPlayer.split(" ").length > 1) {
       fulltextPlayer = this.fulltextName(fulltextPlayer);
+
+      const gamesTable =
+        base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
+      const playersTable =
+        base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
+
       let query = `
             SELECT Elo, Year, Month FROM (
                 SELECT MAX(Elo) as Elo, Year, Month FROM(
-                    SELECT WhiteElo as Elo, Year, Month FROM ${
-                      base == "poland"
-                        ? SETTINGS.polandTable
-                        : SETTINGS.allTable
-                    }
-                        INNER JOIN ${
-                          base == "poland"
-                            ? SETTINGS.polandPlayers
-                            : SETTINGS.allPlayers
-                        }
-                        on WhiteID = ${
-                          base == "poland"
-                            ? SETTINGS.polandPlayers
-                            : SETTINGS.allPlayers
-                        }.id
-                        WHERE MATCH(${
-                          base == "poland"
-                            ? SETTINGS.polandPlayers
-                            : SETTINGS.allPlayers
-                        }.fullname) against(? in boolean mode) AND Month is not null AND WhiteElo is not null AND ${
-        base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
-      }.fullname like ?
+                    SELECT WhiteElo as Elo, Year, Month FROM ${gamesTable}
+                        INNER JOIN ${playersTable}
+                        on WhiteID = ${playersTable}.id
+                        WHERE MATCH(${playersTable}.fullname) against(? in boolean mode)
+                        AND Month is not null
+                        AND WhiteElo > 0
+                        AND ${playersTable}.fullname like ?
                         UNION
-                        SELECT BlackElo as Elo, Year, Month FROM ${
-                          base == "poland"
-                            ? SETTINGS.polandTable
-                            : SETTINGS.allTable
-                        }
-                        INNER JOIN ${
-                          base == "poland"
-                            ? SETTINGS.polandPlayers
-                            : SETTINGS.allPlayers
-                        }
-                        on BlackID = ${
-                          base == "poland"
-                            ? SETTINGS.polandPlayers
-                            : SETTINGS.allPlayers
-                        }.id
-                        WHERE MATCH(${
-                          base == "poland"
-                            ? SETTINGS.polandPlayers
-                            : SETTINGS.allPlayers
-                        }.fullname) against(? in boolean mode) AND Month is not null AND BlackElo is not null AND ${
-        base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
-      }.fullname like ?
+                        SELECT BlackElo as Elo, Year, Month FROM ${gamesTable}
+                        INNER JOIN ${playersTable}
+                        on BlackID = ${playersTable}.id
+                        WHERE MATCH(${playersTable}.fullname) against(? in boolean mode)
+                        AND Month is not null
+                        AND BlackElo > 0
+                        AND ${playersTable}.fullname like ?
                 ) as pom
 
                 group by Year, Month
                         ORDER by Year, Month
             ) as pom2
-    UNION
-      SELECT rating as Elo, Year(CURRENT_DATE()) as Year, Month(CURRENT_DATE()) as Month FROM ${
-        SETTINGS.fidePlayers
-      } WHERE MATCH(name) AGAINST(? in boolean mode)
+            UNION
+              SELECT MAX(rating) as Elo,
+              Year(CURRENT_DATE()) as Year,
+              Month(CURRENT_DATE()) as Month
+              FROM ${SETTINGS.fidePlayers}
+              WHERE MATCH(name) AGAINST(? in boolean mode)
     `;
 
       return await this.execSearch(query, [
