@@ -20,6 +20,9 @@ const BASE = {
           data(result);
         } catch (error) {
           data([]);
+          console.log(query);
+          console.log(params);
+
           throw error;
         }
       });
