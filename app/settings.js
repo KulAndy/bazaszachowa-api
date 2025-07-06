@@ -22,6 +22,7 @@ const SETTINGS = {
     imap: [143, 993],
     pop3: [110, 995],
   },
+  key: "",
 };
 
 module.exports = SETTINGS;

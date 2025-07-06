@@ -14,14 +14,16 @@ const BASE = {
       db.query(query, params, function (error, result) {
         if (error) {
           data([]);
+          console.error(query);
+          console.error(params);
           throw error;
         }
         try {
           data(result);
         } catch (error) {
           data([]);
-          console.log(query);
-          console.log(params);
+          console.error(query);
+          console.error(params);
 
           throw error;
         }

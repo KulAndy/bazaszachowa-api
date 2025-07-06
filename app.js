@@ -5,6 +5,7 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const fs = require("fs");
 const cron = require("node-cron");
+const axios = require("axios");
 
 const app = express();
 const port = 3000;
@@ -49,9 +50,9 @@ app.all("/cr_data/:player", async (req, res) => {
     RESOURCES.crData(player)
       .then((result) => res.json(result))
       .catch((error) => {
-        console.log("====================================");
+        console.error("====================================");
         console.error(error);
-        console.log("====================================");
+        console.error("====================================");
         res.status(503).json([]);
       });
   } else {
@@ -66,9 +67,9 @@ app.all("/fide_data/:player", (req, res) => {
       .then((result) => res.json(result))
       .catch((error) => {
         res.status(503).json([]);
-        console.log("====================================");
+        console.error("====================================");
         console.error(error);
-        console.log("====================================");
+        console.error("====================================");
       });
   } else {
     res.status(400);
@@ -106,9 +107,9 @@ app.all("/game/:base/:id", (req, res) => {
             ECO: null,
           },
         ]);
-        console.log("====================================");
+        console.error("====================================");
         console.error(error);
-        console.log("====================================");
+        console.error("====================================");
       });
   } else {
     res.status(400);
@@ -192,9 +193,9 @@ app.all("/search_game", (req, res) => {
           res.json({ table: params.table || "all", rows: result });
         })
         .catch((error) => {
-          console.log("====================================");
+          console.error("====================================");
           console.error(error);
-          console.log("====================================");
+          console.error("====================================");
           res.status(503).json([]);
         });
     } else {
@@ -220,9 +221,9 @@ app.all("/search_player_opening_game/:player/:color/:opening?", (req, res) => {
       .then((result) => res.json(result))
       .catch((error) => {
         res.status(503).json([]);
-        console.log("====================================");
+        console.error("====================================");
         console.error(error);
-        console.log("====================================");
+        console.error("====================================");
       });
   } else {
     res.status(400).send([]);
@@ -235,18 +236,18 @@ app.all("/search_player/:player", (req, res) => {
     .then((result) => res.json(result))
     .catch((error) => {
       res.status(503).json([]);
-      console.log("====================================");
+      console.error("====================================");
       console.error(error);
-      console.log("====================================");
+      console.error("====================================");
     });
 });
 
 app.post("/send-email", (req, res) => {
   upload(req, res, (err) => {
     if (err) {
-      console.log("====================================");
+      console.error("====================================");
       console.error(err);
-      console.log("====================================");
+      console.error("====================================");
       return res.status(400).send("Error uploading file");
     }
 
@@ -284,9 +285,9 @@ app.post("/send-email", (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.log("====================================");
+        console.error("====================================");
         console.error(error);
-        console.log("====================================");
+        console.error("====================================");
         return res.status(500).send(error.toString());
       }
       if (req.file) {
@@ -297,12 +298,33 @@ app.post("/send-email", (req, res) => {
   });
 });
 
+const getFileMetaData = (fileId) => {
+  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,modifiedTime,webViewLink,size&key=${SETTINGS.key}`;
+  return axios.get(url);
+};
+
+app.get("/base-dumps", async (req, res) => {
+  try {
+    const responses = await Promise.all([
+      getFileMetaData("1g7LmtRscJUIURSG3_6-rbX9n5TyrtgTb"),
+      getFileMetaData("1D8BNRql7XHrhlhUXp-fSnIFZvT0jVF-y"),
+    ]);
+
+    const fileMetaData = responses.map((response) => response.data);
+
+    res.json(fileMetaData);
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
 cron.schedule("0 0 * * *", () => {
   fs.readdir("uploads", (err, files) => {
     if (err) {
-      console.log("====================================");
+      console.error("====================================");
       console.error("Error reading directory:", err);
-      console.log("====================================");
+      console.error("====================================");
       return;
     }
 
@@ -318,5 +340,5 @@ cron.schedule("0 0 * * *", () => {
 });
 
 app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
+  console.info(`Server is listening on port ${port}`);
 });
