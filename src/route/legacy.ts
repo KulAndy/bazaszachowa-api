@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 
 interface RedirectRule {
   from: RegExp;
@@ -9,7 +9,7 @@ export default function redirectLegacyUrls(
   req: Request,
   _res: Response,
   next: Function
-) {
+): void {
   const matchers: RedirectRule[] = [
     {
       from: /^\/cr_data\/([^/]+)$/,

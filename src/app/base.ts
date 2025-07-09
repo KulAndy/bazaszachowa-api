@@ -1,6 +1,7 @@
 import mysql from "mysql";
+
 import SETTINGS from "../app/settings";
-import { EloData } from "./drawer";
+import type { EloData } from "./drawer";
 
 const db = mysql.createPool({
   host: SETTINGS.host,
@@ -40,6 +41,12 @@ interface SearchGameParameters {
   maxYear: string;
   minEco: string;
   maxEco: string;
+}
+
+interface Limits {
+  maxElo: number | null;
+  minYear: number | null;
+  maxYear: number | null;
 }
 
 const BASE = {
@@ -287,7 +294,7 @@ WHERE t1.fullname like ?     `;
       params.push(fulltextPlayer);
       query += " AND MATCH(t1.fullname) against(? in boolean mode) ";
     }
-    return await this.execSearch(query, params);
+    return await this.execSearch<Limits>(query, params);
   },
   async eloHistory(player: string, base = "all") {
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
@@ -342,7 +349,6 @@ WHERE t1.fullname like ?     `;
     ]);
   },
 
-  // eslint-disable-next-line complexity
   async searchGames(obj: SearchGameParameters) {
     const searching = obj.searching || "classic";
     let table;

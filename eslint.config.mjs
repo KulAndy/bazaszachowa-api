@@ -1,6 +1,9 @@
 import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
+import eslintPluginN from "eslint-plugin-n";
+import eslintPluginImport from "eslint-plugin-import";
+import eslintPluginPromise from "eslint-plugin-promise";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
@@ -13,15 +16,41 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         project: "./tsconfig.json",
+        tsconfigRootDir: process.cwd(),
       },
     },
     plugins: {
-      js,
       "@typescript-eslint": tseslint.plugin,
+      n: eslintPluginN,
+      import: eslintPluginImport,
+      promise: eslintPluginPromise,
     },
     rules: {
       ...js.configs.recommended.rules,
       ...tseslint.configs.recommended.rules,
+      ...tseslint.configs.recommendedTypeChecked.rules,
+
+      "n/no-deprecated-api": "error",
+      "n/no-missing-import": "off",
+      "n/no-unpublished-import": "off",
+      "n/no-unsupported-features/es-syntax": "off",
+
+      "import/order": [
+        "warn",
+        {
+          groups: [
+            ["builtin", "external"],
+            "internal",
+            ["parent", "sibling", "index"],
+          ],
+          "newlines-between": "always",
+        },
+      ],
+      "import/no-unresolved": "off",
+      "import/no-duplicates": "error",
+
+      "promise/catch-or-return": "warn",
+      "promise/no-return-wrap": "error",
 
       "no-unused-vars": ["warn", { args: "none", ignoreRestSiblings: true }],
       "prefer-const": "error",
@@ -60,6 +89,13 @@ export default defineConfig([
       "no-lonely-if": "error",
       "no-negated-condition": "error",
       yoda: ["error", "never"],
+
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/ban-ts-comment": [
+        "error",
+        { "ts-ignore": "allow-with-description" },
+      ],
     },
   },
 ]);
