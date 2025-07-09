@@ -1,5 +1,6 @@
-const SETTINGS = require("./settings");
-const mysql = require("mysql");
+import mysql from "mysql";
+import SETTINGS from "../app/settings";
+import { EloData } from "./drawer";
 
 const db = mysql.createPool({
   host: SETTINGS.host,
@@ -8,8 +9,44 @@ const db = mysql.createPool({
   database: SETTINGS.base,
 });
 
+interface Player {
+  fullname: string;
+}
+
+interface Game {
+  id: Number | null;
+  moves: ArrayBuffer | null;
+  Event: String | null;
+  Year: Number | null;
+  Month: Number | null;
+  Day: Number | null;
+  Round: string | null;
+  White: String | null;
+  Black: string | null;
+  Result: String | null;
+  WhiteElo: Number | null;
+  BlackElo: Number | null;
+  ECO: string | null;
+}
+
+interface SearchGameParameters {
+  searching: string;
+  table: string;
+  white: string;
+  black: string;
+  ignore: string;
+  event: string;
+  minYear: string;
+  maxYear: string;
+  minEco: string;
+  maxEco: string;
+}
+
 const BASE = {
-  async execSearch(query, params = []) {
+  async execSearch<T>(
+    query: string,
+    params: (string | number)[] = []
+  ): Promise<T[]> {
     return new Promise((data) => {
       db.query(query, params, function (error, result) {
         if (error) {
@@ -31,7 +68,7 @@ const BASE = {
     });
   },
 
-  fulltextName(name) {
+  fulltextName(name: string) {
     let nameFul = name.replace(/[`'-]/g, " ");
     if (nameFul[0] == "'" || nameFul[0] == "`") {
       nameFul = nameFul.substring(1);
@@ -50,7 +87,7 @@ const BASE = {
     return nameFul;
   },
 
-  async fideData(name) {
+  async fideData(name: string) {
     const params = [name];
     let nameFul = this.fulltextName(name);
     let query = `SELECT
@@ -74,7 +111,7 @@ const BASE = {
     return result;
   },
 
-  async searchPlayer(player, table, forFulltext = false) {
+  async searchPlayer(player: string, table: string, forFulltext = false) {
     player += "%";
 
     let query = `
@@ -84,14 +121,14 @@ const BASE = {
       table == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
     } WHERE fullname like ? `;
 
-    let result = await this.execSearch(query, [player]);
+    let result = await this.execSearch<Player>(query, [player]);
     if (result.length == 0) {
       query = `
     SELECT
     fullname
     FROM ${SETTINGS.wholePlayers} WHERE fullname like ? `;
 
-      result = await this.execSearch(query, [player]);
+      result = await this.execSearch<Player>(query, [player]);
     }
     if (forFulltext) {
       for (let i = 0; i < result.length; i++) {
@@ -99,12 +136,11 @@ const BASE = {
       }
     }
     result = [...new Set(result)];
-    result = result.map((a) => a.fullname);
 
-    return result;
+    return result.map((a) => a.fullname);
   },
 
-  async getGame(id, base) {
+  async getGame(id: number | string, base: string) {
     let playersTable =
       base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
 
@@ -125,12 +161,12 @@ const BASE = {
       SETTINGS.sitesTable
     }.id
     LEFT join ${SETTINGS.ecoTable} on ${table}.ecoID = ${SETTINGS.ecoTable}.id
-    WHERE ${table}.id = ${parseInt(id)}
+    WHERE ${table}.id = ${Number(id)}
     `;
-    return await this.execSearch(query);
+    return await this.execSearch<Game>(query);
   },
 
-  async playerOpeningStatsColor(player, color) {
+  async playerOpeningStatsColor(player: string, color: string) {
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
     if (fulltextPlayer.split(" ").length > 1) {
       fulltextPlayer = this.fulltextName(fulltextPlayer);
@@ -159,7 +195,7 @@ const BASE = {
     return await this.execSearch(query, params);
   },
 
-  async playerOpeningStats(player) {
+  async playerOpeningStats(player: string) {
     let whites = await this.playerOpeningStatsColor(player, "white");
     let blacks = await this.playerOpeningStatsColor(player, "black");
     let stats = {
@@ -169,7 +205,11 @@ const BASE = {
     return stats;
   },
 
-  async searchPlayerOpeningGame(player, color = null, opening = null) {
+  async searchPlayerOpeningGame(
+    player: string,
+    color: string | null = null,
+    opening: string | null = null
+  ) {
     let query = `
     SELECT
         ${SETTINGS.allTable}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${SETTINGS.allTable}.Year, ${SETTINGS.allTable}.Month, ${SETTINGS.allTable}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${SETTINGS.ecoTable}.ECO
@@ -215,10 +255,10 @@ const BASE = {
       query +=
         "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black LIMIT 10000";
     }
-    return await this.execSearch(query, params);
+    return await this.execSearch<Game>(query, params);
   },
 
-  async minMaxYearEco(player, base) {
+  async minMaxYearEco(player: string, base: string = "all") {
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
     if (fulltextPlayer.split(" ").length > 1) {
       fulltextPlayer = this.fulltextName(fulltextPlayer);
@@ -251,17 +291,20 @@ WHERE t1.fullname like ?     `;
     }
     return await this.execSearch(query, params);
   },
-  async eloHistory(player, base = "all") {
+  async eloHistory(player: string, base = "all") {
     let fulltextPlayer = JSON.parse(JSON.stringify(player));
-    if (fulltextPlayer.split(" ").length > 1) {
-      fulltextPlayer = this.fulltextName(fulltextPlayer);
+    if (fulltextPlayer.split(" ").length === 0) {
+      return [];
+    }
 
-      const gamesTable =
-        base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
-      const playersTable =
-        base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
+    fulltextPlayer = this.fulltextName(fulltextPlayer);
 
-      let query = `
+    const gamesTable =
+      base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
+    const playersTable =
+      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
+
+    let query = `
             SELECT Elo, Year, Month FROM (
                 SELECT MAX(Elo) as Elo, Year, Month FROM(
                     SELECT WhiteElo as Elo, Year, Month FROM ${gamesTable}
@@ -292,21 +335,20 @@ WHERE t1.fullname like ?     `;
               WHERE MATCH(name) AGAINST(? in boolean mode)
     `;
 
-      return await this.execSearch(query, [
-        fulltextPlayer,
-        player,
-        fulltextPlayer,
-        player,
-        fulltextPlayer,
-      ]);
-    }
+    return await this.execSearch<EloData>(query, [
+      fulltextPlayer,
+      player,
+      fulltextPlayer,
+      player,
+      fulltextPlayer,
+    ]);
   },
 
-  async searchGames(obj) {
+  async searchGames(obj: SearchGameParameters) {
     const searching = obj.searching || "classic";
     let table;
-    let white;
-    let black;
+    let white = "";
+    let black = "";
     let ignore;
     let event;
     let minYear;
@@ -326,10 +368,10 @@ WHERE t1.fullname like ?     `;
     }
     ignore = obj.ignore && obj.ignore.toLowerCase() === "true";
     if (obj.event) event = obj.event + "%";
-    minYear = parseInt(obj.minYear) || 1475;
-    maxYear = parseInt(obj.maxYear) || new Date().getFullYear();
-    minEco = parseInt(obj.minEco) || 1;
-    maxEco = parseInt(obj.maxEco) || 500;
+    minYear = Number(obj.minYear) || 1475;
+    maxYear = Number(obj.maxYear) || new Date().getFullYear();
+    minEco = Number(obj.minEco) || 1;
+    maxEco = Number(obj.maxEco) || 500;
 
     let eventsTable = SETTINGS.eventsTable;
     let playersTable =
@@ -565,8 +607,8 @@ WHERE t1.fullname like ?     `;
 
     query +=
       " order BY year DESC,month DESC,day DESC,Event,Round desc, White, Black limit 10000";
-    return this.execSearch(query, params);
+    return this.execSearch<Game>(query, params);
   },
 };
 
-module.exports = BASE;
+export default BASE;

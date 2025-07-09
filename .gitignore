@@ -1,3 +1,4 @@
-app/settings.js
+public_nodejs/
+node_modules/
 node_modules/
 .vscode

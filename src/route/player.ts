@@ -1,9 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const RESOURCES = require("../app/resources");
-const BASE = require("../app/base");
-const DRAWER = require("../app/drawer");
-const CHESS = require("../app/chess");
+import BASE from "../app/base";
+import RESOURCES from "../app/resources";
+import DRAWER from "../app/drawer";
 
 router.all("/cr/:player", async (req, res) => {
   const player = req.params.player;
@@ -33,7 +32,9 @@ router.all("/fide/:player", async (req, res) => {
 
 router.all("/plot/:format/:player", async (req, res) => {
   const { format, player } = req.params;
-  if (!format || !player) return res.status(400).json(null);
+  if (!format || !player) {
+    return res.status(400).json(null);
+  }
 
   const elo_history = await BASE.eloHistory(player);
 
@@ -70,4 +71,4 @@ router.all("/openings/:player", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

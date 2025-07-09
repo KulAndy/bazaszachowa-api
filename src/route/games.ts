@@ -1,7 +1,7 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const BASE = require("../app/base");
-const CHESS = require("../app/chess");
+import BASE from "../app/base";
+import CHESS from "../app/chess";
 
 router.all("/", async (req, res) => {
   const params = req.method === "GET" ? req.query : req.body;
@@ -22,7 +22,9 @@ router.all("/", async (req, res) => {
 
 router.all("/opening/:player/:color/:opening?", async (req, res) => {
   const { player, color, opening = null } = req.params;
-  if (!["white", "black"].includes(color)) return res.status(400).send([]);
+  if (!["white", "black"].includes(color) || typeof color !== "string") {
+    return res.status(400).send([]);
+  }
 
   try {
     const result = await BASE.searchPlayerOpeningGame(player, color, opening);
@@ -37,4 +39,4 @@ router.all("/opening/:player/:color/:opening?", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,7 +1,7 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const BASE = require("../app/base");
-const CHESS = require("../app/chess");
+import BASE from "../app/base";
+import CHESS from "../app/chess";
 
 router.all("/:base/:id", async (req, res) => {
   const { base, id } = req.params;
@@ -37,4 +37,4 @@ router.all("/:base/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

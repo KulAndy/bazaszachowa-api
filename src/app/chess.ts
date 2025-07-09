@@ -1,3 +1,9 @@
+interface Move {
+  from: string;
+  to: string;
+  promotion: string | null;
+}
+
 const CHESS = {
   SQUARES: [
     "a1",
@@ -69,7 +75,10 @@ const CHESS = {
 
   PIECES: ["p", "n", "b", "r", "q", "k", null],
 
-  movesBin2obj: (blob) => {
+  movesBin2obj: (blob: ArrayBuffer | null) => {
+    if (blob === null) {
+      return [];
+    }
     const bytes = new Uint8Array(blob);
     const result = [];
 
@@ -81,7 +90,11 @@ const CHESS = {
       const b3 = packed & 0x07;
 
       try {
-        const move = { from: CHESS.SQUARES[b1], to: CHESS.SQUARES[b2] };
+        const move: Move = {
+          from: CHESS.SQUARES[b1] ?? "",
+          to: CHESS.SQUARES[b2] ?? "",
+          promotion: null,
+        };
 
         if (CHESS.PIECES[b3]) {
           move.promotion = CHESS.PIECES[b3];
@@ -98,4 +111,4 @@ const CHESS = {
   },
 };
 
-module.exports = CHESS;
+export default CHESS;

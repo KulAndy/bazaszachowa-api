@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const BASE = require("../app/base");
+import BASE from "../app/base";
 
 router.all("/:player", async (req, res) => {
   try {
@@ -12,4 +12,4 @@ router.all("/:player", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

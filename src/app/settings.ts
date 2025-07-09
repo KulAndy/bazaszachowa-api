@@ -1,4 +1,4 @@
-const SETTINGS = {
+export default {
   admin: "",
   adminContact: "",
   host: "",
@@ -24,5 +24,3 @@ const SETTINGS = {
   },
   key: "",
 };
-
-module.exports = SETTINGS;
