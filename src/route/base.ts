@@ -10,12 +10,13 @@ type FileMetaData = {
   modifiedTime: string;
   webViewLink: string;
   size: string;
+  description?: string;
 };
 
 const getFileMetaData = (
   fileId: string
 ): Promise<AxiosResponse<FileMetaData>> => {
-  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,modifiedTime,webViewLink,size&key=${SETTINGS.key}`;
+  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,modifiedTime,webViewLink,size,description&key=${SETTINGS.key}`;
   return axios.get<FileMetaData>(url);
 };
 
