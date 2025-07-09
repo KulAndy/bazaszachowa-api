@@ -45,11 +45,11 @@ export default function redirectLegacyUrls(
     },
     {
       from: /^\/send-email\/?$/,
-      to: () => `/mail/send`,
+      to: () => "/mail/send",
     },
     {
       from: /^\/base-dumps\/?$/,
-      to: () => `/base/dumps`,
+      to: () => "/base/dumps",
     },
     {
       from: /^\/search_game\/?$/,

@@ -18,11 +18,11 @@ const DRAWER: Drawer = {
   eloJPEG: async (data: EloData[], player: string): Promise<Buffer> => {
     const header = 10;
     const margin = 50;
-    let width = 750;
+    const width = 750;
     let height = 750;
     const img = gm(width + margin * 2, height + margin * 2, "white");
     height += header;
-    let initialRating = data[0];
+    const initialRating = data[0];
     let minElo = 4000,
       maxElo = 0;
 
@@ -42,10 +42,10 @@ const DRAWER: Drawer = {
       (new Date().getFullYear() - initialRating.Year - 1) * 12 +
       new Date().getMonth();
     const eloRange = Math.ceil((maxElo - minElo) / 50) + 1;
-    let k1 = monthNumber === 1 ? width : width / (monthNumber - 1);
-    let k2 = (height - margin * 2) / eloRange;
-    let maxGraphElo = Math.ceil(maxElo / 50) * 50;
-    let minGraphElo = Math.floor(minElo / 50) * 50;
+    const k1 = monthNumber === 1 ? width : width / (monthNumber - 1);
+    const k2 = (height - margin * 2) / eloRange;
+    const maxGraphElo = Math.ceil(maxElo / 50) * 50;
+    const minGraphElo = Math.floor(minElo / 50) * 50;
 
     img
       .font("Helvetica-Bold")
@@ -58,14 +58,15 @@ const DRAWER: Drawer = {
 
     img.stroke("black", 2).drawLine(margin, margin + header, margin, height);
 
-    let maxPoint = header + margin;
+    const maxPoint = header + margin;
     let minPoint = header + margin;
     let startDate = new Date(`${initialRating.Year}-${initialRating.Month}`);
-    let currentDate = new Date();
+    const currentDate = new Date();
     currentDate.setDate(1);
     let i = 0;
-    let period = Math.ceil(yearsDiff(startDate, currentDate) / 22);
+    const period = Math.ceil(yearsDiff(startDate, currentDate) / 22);
 
+    // eslint-disable-next-line no-unmodified-loop-condition
     while (startDate <= currentDate) {
       if (startDate.getMonth() === 0) {
         if (yearsDiff(startDate, currentDate) % period === 0) {
@@ -117,16 +118,14 @@ const DRAWER: Drawer = {
               height + 50,
               `${startDate.getFullYear()}-${startDate.getMonth()}`
             );
-        } else {
-          if (period === 1) {
-            img
-              .stroke("transparent", 0)
-              .drawText(
-                margin + k1 * i,
-                height + 20,
-                startDate.getFullYear().toString()
-              );
-          }
+        } else if (period === 1) {
+          img
+            .stroke("transparent", 0)
+            .drawText(
+              margin + k1 * i,
+              height + 20,
+              startDate.getFullYear().toString()
+            );
         }
       }
       startDate.setMonth(startDate.getMonth() + 1);
@@ -178,20 +177,20 @@ const DRAWER: Drawer = {
     startDate = new Date(`${initialRating.Year}-${initialRating.Month}`);
     let currentBreak = data[0];
     let currentPointX = margin;
-    let currentPercent =
+    const currentPercent =
       1 - (initialRating.Elo - minGraphElo) / (maxGraphElo - minGraphElo);
     let currentPointY = currentPercent * (minPoint - maxPoint) + maxPoint;
 
     img.stroke("blue", 3);
     for (let i = 1; i < data.length; i++) {
-      let newBreak = data[i];
-      let monthDiff =
+      const newBreak = data[i];
+      const monthDiff =
         (newBreak.Year - currentBreak.Year) * 12 +
         (newBreak.Month - currentBreak.Month);
-      let newCurrentPointX = currentPointX + k1 * monthDiff;
-      let newCurrentPercent =
+      const newCurrentPointX = currentPointX + k1 * monthDiff;
+      const newCurrentPercent =
         1 - (data[i].Elo - minGraphElo) / (maxGraphElo - minGraphElo);
-      let newCurrentPointY =
+      const newCurrentPointY =
         newCurrentPercent * (minPoint - maxPoint) + maxPoint;
       img.drawLine(
         currentPointX,
@@ -224,7 +223,7 @@ const DRAWER: Drawer = {
   eloSVG: async (data: EloData[], player: string): Promise<string> => {
     const header = 10;
     const margin = 50;
-    let width = 750;
+    const width = 750;
     let height = 750;
     const svg = document.createElement("svg");
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
@@ -243,7 +242,7 @@ const DRAWER: Drawer = {
     svg.appendChild(background);
 
     height += header;
-    let initialRating = data[0];
+    const initialRating = data[0];
     let minElo = 4000,
       maxElo = 0;
 
@@ -273,10 +272,10 @@ const DRAWER: Drawer = {
       (new Date().getFullYear() - initialRating.Year - 1) * 12 +
       new Date().getMonth();
     const eloRange = Math.ceil((maxElo - minElo) / 50) + 1;
-    let k1 = monthNumber === 1 ? width : width / (monthNumber - 1);
-    let k2 = (height - margin * 2) / eloRange;
-    let maxGraphElo = Math.ceil(maxElo / 50) * 50;
-    let minGraphElo = Math.floor(minElo / 50) * 50;
+    const k1 = monthNumber === 1 ? width : width / (monthNumber - 1);
+    const k2 = (height - margin * 2) / eloRange;
+    const maxGraphElo = Math.ceil(maxElo / 50) * 50;
+    const minGraphElo = Math.floor(minElo / 50) * 50;
 
     const title = document.createElement("text");
     title.appendChild(document.createTextNode(player));
@@ -299,15 +298,15 @@ const DRAWER: Drawer = {
     svg.appendChild(title);
     svg.appendChild(subtitle);
 
-    let maxPoint = header + margin;
+    const maxPoint = header + margin;
     let minPoint = header + margin;
-    let startDate = new Date(`${initialRating.Year}-${initialRating.Month}`);
-    let currentDate = new Date();
+    const startDate = new Date(`${initialRating.Year}-${initialRating.Month}`);
+    const currentDate = new Date();
     currentDate.setDate(1);
     let i = 0;
-    let period = Math.ceil(yearsDiff(startDate, currentDate) / 22);
+    const period = Math.ceil(yearsDiff(startDate, currentDate) / 22);
 
-    let line = document.createElement("line");
+    const line = document.createElement("line");
     line.setAttribute("x1", margin.toString());
     line.setAttribute("y1", (margin + header).toString());
     line.setAttribute("x2", margin.toString());
@@ -315,10 +314,11 @@ const DRAWER: Drawer = {
     line.setAttribute("style", "stroke:#000;stroke-width:2");
     svg.appendChild(line);
 
+    // eslint-disable-next-line no-unmodified-loop-condition
     while (startDate <= currentDate) {
       if (startDate.getMonth() === 0) {
         if (yearsDiff(startDate, currentDate) % period === 0) {
-          let year = document.createElement("text");
+          const year = document.createElement("text");
           year.setAttribute("x", (margin + k1 * i).toString());
           year.setAttribute("y", (height + 20).toString());
           year.appendChild(
@@ -327,7 +327,7 @@ const DRAWER: Drawer = {
           svg.appendChild(year);
 
           if (period > 1) {
-            let line = document.createElement("line");
+            const line = document.createElement("line");
             line.setAttribute("x1", (margin + k1 * i).toString());
             line.setAttribute("y1", (margin + header).toString());
             line.setAttribute("x2", (margin + k1 * i).toString());
@@ -335,7 +335,7 @@ const DRAWER: Drawer = {
             line.setAttribute("style", "stroke:#f00;stroke-width:2");
             svg.appendChild(line);
           } else {
-            let line = document.createElement("line");
+            const line = document.createElement("line");
             line.setAttribute("x1", (margin + k1 * i).toString());
             line.setAttribute("y1", (margin + header).toString());
             line.setAttribute("x2", (margin + k1 * i).toString());
@@ -344,7 +344,7 @@ const DRAWER: Drawer = {
             svg.appendChild(line);
           }
         } else {
-          let line = document.createElement("line");
+          const line = document.createElement("line");
           line.setAttribute("x1", (margin + k1 * i).toString());
           line.setAttribute("y1", (margin + header).toString());
           line.setAttribute("x2", (margin + k1 * i).toString());
@@ -357,7 +357,7 @@ const DRAWER: Drawer = {
         startDate.getFullYear() === initialRating.Year
       ) {
         if (initialRating.Month < 5) {
-          let yearMonth = document.createElement("text");
+          const yearMonth = document.createElement("text");
           yearMonth.setAttribute("x", (margin + k1 * i).toString());
           yearMonth.setAttribute("y", (height + 20).toString());
           yearMonth.appendChild(
@@ -366,16 +366,14 @@ const DRAWER: Drawer = {
             )
           );
           svg.appendChild(yearMonth);
-        } else {
-          if (period === 1) {
-            let year = document.createElement("text");
-            year.setAttribute("x", (margin + k1 * i).toString());
-            year.setAttribute("y", (height + 20).toString());
-            year.appendChild(
-              document.createTextNode(startDate.getFullYear().toString())
-            );
-            svg.appendChild(year);
-          }
+        } else if (period === 1) {
+          const year = document.createElement("text");
+          year.setAttribute("x", (margin + k1 * i).toString());
+          year.setAttribute("y", (height + 20).toString());
+          year.appendChild(
+            document.createTextNode(startDate.getFullYear().toString())
+          );
+          svg.appendChild(year);
         }
       }
       startDate.setMonth(startDate.getMonth() + 1);
@@ -383,7 +381,7 @@ const DRAWER: Drawer = {
         startDate.getMonth() === currentDate.getMonth() &&
         startDate.getFullYear() === currentDate.getFullYear()
       ) {
-        let line = document.createElement("line");
+        const line = document.createElement("line");
         line.setAttribute("x1", (margin + k1 * i).toString());
         line.setAttribute("y1", (margin + header).toString());
         line.setAttribute("x2", (margin + k1 * i).toString());
@@ -392,7 +390,7 @@ const DRAWER: Drawer = {
         svg.appendChild(line);
 
         for (let j = 0; j <= eloRange; j++) {
-          let elo = document.createElement("text");
+          const elo = document.createElement("text");
           elo.setAttribute("x", "5");
           elo.setAttribute("y", (margin + header + k2 * j).toString());
           elo.appendChild(
@@ -400,7 +398,7 @@ const DRAWER: Drawer = {
           );
           svg.appendChild(elo);
 
-          let line = document.createElement("line");
+          const line = document.createElement("line");
           line.setAttribute("x1", margin.toString());
           line.setAttribute("y1", (margin + header + k2 * j).toString());
           line.setAttribute("x2", (margin + k1 * (i + 1)).toString());
@@ -410,7 +408,7 @@ const DRAWER: Drawer = {
 
           minPoint = margin + header + k2 * j;
 
-          let line2 = document.createElement("line");
+          const line2 = document.createElement("line");
           line2.setAttribute("x1", margin.toString());
           line2.setAttribute("y1", height.toString());
           line2.setAttribute("x2", (margin + k1 * (i + 1)).toString());
@@ -423,7 +421,7 @@ const DRAWER: Drawer = {
     }
 
     if (startDate.getMonth() === 0) {
-      let year = document.createElement("text");
+      const year = document.createElement("text");
       year.setAttribute("x", (margin + k1 * --i).toString());
       year.setAttribute("y", (height + 20).toString());
       year.appendChild(
@@ -434,22 +432,22 @@ const DRAWER: Drawer = {
 
     let currentBreak = data[0];
     let currentPointX = margin;
-    let currentPercent =
+    const currentPercent =
       1 - (initialRating.Elo - minGraphElo) / (maxGraphElo - minGraphElo);
     let currentPointY = currentPercent * (minPoint - maxPoint) + maxPoint;
 
     for (let i = 1; i < data.length; i++) {
-      let newBreak = data[i];
-      let monthDiff =
+      const newBreak = data[i];
+      const monthDiff =
         (newBreak.Year - currentBreak.Year) * 12 +
         (newBreak.Month - currentBreak.Month);
-      let newCurrentPointX = currentPointX + k1 * monthDiff;
-      let newCurrentPercent =
+      const newCurrentPointX = currentPointX + k1 * monthDiff;
+      const newCurrentPercent =
         1 - (data[i].Elo - minGraphElo) / (maxGraphElo - minGraphElo);
-      let newCurrentPointY =
+      const newCurrentPointY =
         newCurrentPercent * (minPoint - maxPoint) + maxPoint;
 
-      let line = document.createElement("line");
+      const line = document.createElement("line");
       line.setAttribute("x1", currentPointX.toString());
       line.setAttribute("y1", currentPointY.toString());
       line.setAttribute(
@@ -460,7 +458,7 @@ const DRAWER: Drawer = {
       line.setAttribute("style", "stroke:#00f;stroke-width:4");
       svg.appendChild(line);
 
-      let line2 = document.createElement("line");
+      const line2 = document.createElement("line");
       line2.setAttribute(
         "x1",
         (currentPointX + k1 * (monthDiff - 1)).toString()
@@ -485,11 +483,12 @@ function yearsDiff(date1: Date, date2: Date): number {
     return 0;
   }
   let diff = -1;
-  let gDate =
+  const gDate =
     date1 > date2 ? new Date(date1.getTime()) : new Date(date2.getTime());
-  let lDate =
+  const lDate =
     date1 < date2 ? new Date(date1.getTime()) : new Date(date2.getTime());
 
+  // eslint-disable-next-line no-unmodified-loop-condition
   while (lDate < gDate) {
     diff++;
     lDate.setFullYear(lDate.getFullYear() + 1);

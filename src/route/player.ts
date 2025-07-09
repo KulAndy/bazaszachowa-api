@@ -6,7 +6,7 @@ import DRAWER from "../app/drawer";
 
 router.all("/cr/:player", async (req, res) => {
   const player = req.params.player;
-  if (!player) return res.status(400);
+  if (!player) {return res.status(400);}
 
   try {
     const result = await RESOURCES.crData(player);
@@ -19,7 +19,7 @@ router.all("/cr/:player", async (req, res) => {
 
 router.all("/fide/:player", async (req, res) => {
   const player = req.params.player;
-  if (!player) return res.status(400);
+  if (!player) {return res.status(400);}
 
   try {
     const result = await BASE.fideData(player);

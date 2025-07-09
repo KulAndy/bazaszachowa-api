@@ -48,7 +48,7 @@ const BASE = {
     params: (string | number)[] = []
   ): Promise<T[]> {
     return new Promise((data) => {
-      db.query(query, params, function (error, result) {
+      db.query(query, params, (error, result) => {
         if (error) {
           data([]);
           console.error(query);
@@ -72,8 +72,6 @@ const BASE = {
     let nameFul = name.replace(/[`'-]/g, " ");
     if (nameFul[0] == "'" || nameFul[0] == "`") {
       nameFul = nameFul.substring(1);
-    } else {
-      nameFul = nameFul;
     }
     nameFul = nameFul.replace(/[^a-zA-Z0-9\s]/g, "");
     nameFul = nameFul.replace(/\b\w{1,2}\b/g, "");
@@ -89,7 +87,7 @@ const BASE = {
 
   async fideData(name: string) {
     const params = [name];
-    let nameFul = this.fulltextName(name);
+    const nameFul = this.fulltextName(name);
     let query = `SELECT
       fideid,
       name,
@@ -107,7 +105,7 @@ const BASE = {
           ? IN BOOLEAN MODE
       )`;
     }
-    let result = await this.execSearch(query, params);
+    const result = await this.execSearch(query, params);
     return result;
   },
 
@@ -141,11 +139,11 @@ const BASE = {
   },
 
   async getGame(id: number | string, base: string) {
-    let playersTable =
+    const playersTable =
       base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
 
-    let table = base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
-    let query = `SELECT
+    const table = base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
+    const query = `SELECT
     ${table}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${
       SETTINGS.sitesTable
     }.site as Site, ${table}.Year, ${table}.Month, ${table}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo,${
@@ -186,7 +184,7 @@ const BASE = {
 
     if (fulltextPlayer) {
       params.push(fulltextPlayer);
-      query += ` AND MATCH(t1.fullname) against(? in boolean mode)`;
+      query += " AND MATCH(t1.fullname) against(? in boolean mode)";
     }
 
     query += ` GROUP BY opening
@@ -196,9 +194,9 @@ const BASE = {
   },
 
   async playerOpeningStats(player: string) {
-    let whites = await this.playerOpeningStatsColor(player, "white");
-    let blacks = await this.playerOpeningStatsColor(player, "black");
-    let stats = {
+    const whites = await this.playerOpeningStatsColor(player, "white");
+    const blacks = await this.playerOpeningStatsColor(player, "black");
+    const stats = {
       whites: whites,
       blacks: blacks,
     };
@@ -233,7 +231,7 @@ const BASE = {
         WHERE t1.fullname like ?
 `;
       if (fulltextPlayer) {
-        query += ` AND match(t1.fullname) against(? in boolean mode) `;
+        query += " AND match(t1.fullname) against(? in boolean mode) ";
       }
       if (opening) {
         query += " AND opening like ?";
@@ -246,7 +244,7 @@ const BASE = {
         WHERE t2.fullname like ?
 `;
       if (fulltextPlayer) {
-        query += ` AND match(t2.fullname) against(? in boolean mode) `;
+        query += " AND match(t2.fullname) against(? in boolean mode) ";
       }
       if (opening) {
         query += "AND opening like ?";
@@ -274,7 +272,7 @@ inner join ${
 WHERE t1.fullname like ?`;
     if (fulltextPlayer) {
       params.push(fulltextPlayer);
-      query += ` AND MATCH(t1.fullname) against(? in boolean mode) `;
+      query += " AND MATCH(t1.fullname) against(? in boolean mode) ";
     }
     params.push(player);
     query += `
@@ -287,7 +285,7 @@ inner join ${
 WHERE t1.fullname like ?     `;
     if (fulltextPlayer) {
       params.push(fulltextPlayer);
-      query += ` AND MATCH(t1.fullname) against(? in boolean mode) `;
+      query += " AND MATCH(t1.fullname) against(? in boolean mode) ";
     }
     return await this.execSearch(query, params);
   },
@@ -304,7 +302,7 @@ WHERE t1.fullname like ?     `;
     const playersTable =
       base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
 
-    let query = `
+    const query = `
             SELECT Elo, Year, Month FROM (
                 SELECT MAX(Elo) as Elo, Year, Month FROM(
                     SELECT WhiteElo as Elo, Year, Month FROM ${gamesTable}
@@ -344,20 +342,24 @@ WHERE t1.fullname like ?     `;
     ]);
   },
 
+  // eslint-disable-next-line complexity
   async searchGames(obj: SearchGameParameters) {
     const searching = obj.searching || "classic";
     let table;
     let white = "";
     let black = "";
-    let ignore;
+    const ignore = obj.ignore && obj.ignore.toLowerCase() === "true";
     let event;
-    let minYear;
-    let maxYear;
-    let minEco;
-    let maxEco;
+    const minYear = Number(obj.minYear) || 1475;
+    const maxYear = Number(obj.maxYear) || new Date().getFullYear();
+    const minEco = Number(obj.minEco) || 1;
+    const maxEco = Number(obj.maxEco) || 500;
     let whiteLike;
     let blackLike;
-    if (obj.table) table = obj.table || "all";
+
+    if (obj.table) {
+      table = obj.table || "all";
+    }
     if (obj.white) {
       white = obj.white;
       whiteLike = white + "%";
@@ -366,22 +368,19 @@ WHERE t1.fullname like ?     `;
       black = obj.black;
       blackLike = black + "%";
     }
-    ignore = obj.ignore && obj.ignore.toLowerCase() === "true";
-    if (obj.event) event = obj.event + "%";
-    minYear = Number(obj.minYear) || 1475;
-    maxYear = Number(obj.maxYear) || new Date().getFullYear();
-    minEco = Number(obj.minEco) || 1;
-    maxEco = Number(obj.maxEco) || 500;
+    if (obj.event) {
+      event = obj.event + "%";
+    }
 
-    let eventsTable = SETTINGS.eventsTable;
-    let playersTable =
+    const eventsTable = SETTINGS.eventsTable;
+    const playersTable =
       table == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
-    let gamesTable =
+    const gamesTable =
       table == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
-    let ecoTable = SETTINGS.ecoTable;
+    const ecoTable = SETTINGS.ecoTable;
 
     let query;
-    let params = [];
+    const params = [];
     if (searching == "classic") {
       if (whiteLike || blackLike) {
         query = `SELECT
@@ -482,10 +481,10 @@ WHERE t1.fullname like ?     `;
           query += ` whiteid = (SELECT id FROM ${playersTable} WHERE `;
           white = this.fulltextName(obj.white);
           if (white) {
-            query += ` match(fullname) against(? in boolean mode) AND `;
+            query += " match(fullname) against(? in boolean mode) AND ";
             params.push(white);
           }
-          query += ` fullname like ? ) `;
+          query += " fullname like ? ) ";
           params.push(obj.white);
         }
 
@@ -496,10 +495,10 @@ WHERE t1.fullname like ?     `;
           query += ` blackid = (SELECT id FROM ${playersTable} WHERE `;
           black = this.fulltextName(obj.black);
           if (black) {
-            query += `  match(fullname) against(? in boolean mode) AND  `;
+            query += "  match(fullname) against(? in boolean mode) AND  ";
             params.push(black);
           }
-          query += `  fullname like ? ) `;
+          query += "  fullname like ? ) ";
           params.push(obj.black);
         }
 
@@ -537,18 +536,18 @@ WHERE t1.fullname like ?     `;
             if (white.split(" ").length > 1) {
               query += ` blackid = (SELECT id FROM ${playersTable} WHERE `;
               if (white) {
-                query += ` match(fullname) against(? in boolean mode) AND  `;
+                query += " match(fullname) against(? in boolean mode) AND  ";
                 params.push(white);
               }
-              query += ` fullname like ? ) `;
+              query += " fullname like ? ) ";
               params.push(obj.white);
             } else {
               query += ` blackid = (SELECT id FROM ${playersTable} WHERE `;
               if (white) {
-                query += ` match(fullname) against(?) `;
+                query += " match(fullname) against(?) ";
                 params.push(white);
               }
-              query += ` fullname like ? ) `;
+              query += " fullname like ? ) ";
               params.push(white);
             }
           }
@@ -563,18 +562,18 @@ WHERE t1.fullname like ?     `;
               }
               query += ` whiteid = (SELECT id FROM ${playersTable} WHERE `;
               if (black) {
-                query += ` match(fullname) against(? in boolean mode) `;
+                query += " match(fullname) against(? in boolean mode) ";
                 params.push(black);
               }
-              query += ` fullname like ? ) `;
+              query += " fullname like ? ) ";
               params.push(obj.black);
             } else {
               query += ` whiteid = (SELECT id FROM ${playersTable} WHERE `;
               if (black) {
-                query += ` match(fullname) against(?) AND `;
+                query += " match(fullname) against(?) AND ";
                 params.push(black);
               }
-              query += ` fullname like ? ) `;
+              query += " fullname like ? ) ";
               params.push(black);
             }
           }

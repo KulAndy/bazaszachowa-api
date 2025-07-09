@@ -63,4 +63,4 @@ const RESOURCES: Resources = {
   },
 };
 
-export = RESOURCES;
+export default RESOURCES;

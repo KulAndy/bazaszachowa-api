@@ -5,7 +5,7 @@ import CHESS from "../app/chess";
 
 router.all("/:base/:id", async (req, res) => {
   const { base, id } = req.params;
-  if (!base || !id) return res.status(400);
+  if (!base || !id) {return res.status(400);}
 
   try {
     const result = await BASE.getGame(id, base);

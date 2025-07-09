@@ -1,4 +1,4 @@
-import express, { Request } from "express";
+import express from "express";
 import multer, { StorageEngine } from "multer";
 import nodemailer from "nodemailer";
 import path from "path";
@@ -10,8 +10,8 @@ const uploadDir: string = path.resolve(__dirname, "../../uploads/");
 
 const storage: StorageEngine = multer.diskStorage({
   destination: (
-    _req: Request,
-    _file: Express.Multer.File,
+    _req,
+    _file,
     cb: (error: Error | null, destination: string) => void
   ) => {
     if (!fs.existsSync(uploadDir)) {
@@ -20,8 +20,8 @@ const storage: StorageEngine = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (
-    _req: Request,
-    file: Express.Multer.File,
+    _req,
+    file,
     cb: (error: Error | null, filename: string) => void
   ) => {
     cb(
@@ -94,4 +94,4 @@ router.post("/send", (req, res) => {
   });
 });
 
-export = router;
+export default router;
