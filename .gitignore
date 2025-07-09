@@ -2,3 +2,4 @@ public_nodejs/
 node_modules/
 node_modules/
 .vscode
+logs/
