@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import bodyParser from "body-parser";
-import path from "path";
-import fs from "fs";
+import path from "node:path";
+import fs from "node:fs";
 import cron from "node-cron";
 import cors from "cors";
 
@@ -44,13 +44,13 @@ cron.schedule("0 0 * * *", () => {
       return;
     }
 
-    files.forEach((file) => {
+    for (const file of files) {
       fs.unlink(path.join("uploads", file), (unlinkErr) => {
         if (unlinkErr) {
           console.error("Error deleting file:", unlinkErr);
         }
       });
-    });
+    }
   });
 });
 

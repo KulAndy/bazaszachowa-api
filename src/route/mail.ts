@@ -1,8 +1,8 @@
 import express from "express";
 import multer, { StorageEngine } from "multer";
 import nodemailer from "nodemailer";
-import path from "path";
-import fs from "fs";
+import path from "node:path";
+import fs from "node:fs";
 
 import Settings from "../app/settings";
 
