@@ -6,7 +6,9 @@ import CHESS from "../app/chess";
 
 router.all("/", async (req, res) => {
   const params = req.method === "GET" ? req.query : req.body;
-  if (!params.white && !params.black) {return res.status(400).send([]);}
+  if (!params.white && !params.black) {
+    return res.status(400).send([]);
+  }
 
   try {
     const result = await BASE.searchGames(params);

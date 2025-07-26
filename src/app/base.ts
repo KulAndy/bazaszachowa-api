@@ -539,49 +539,29 @@ WHERE t1.fullname like ?     `;
           WHERE `;
 
           if (whiteLike) {
-            if (white.split(" ").length > 1) {
-              query += ` blackid = (SELECT id FROM ${playersTable} WHERE `;
-              if (white) {
-                query += " match(fullname) against(? in boolean mode) AND  ";
-                params.push(white);
-              }
-              query += " fullname like ? ) ";
-              params.push(obj.white);
-            } else {
-              query += ` blackid = (SELECT id FROM ${playersTable} WHERE `;
-              if (white) {
-                query += " match(fullname) against(?) ";
-                params.push(white);
-              }
-              query += " fullname like ? ) ";
+            query += ` blackid = (SELECT id FROM ${playersTable} WHERE `;
+            if (white) {
+              query += " match(fullname) against(? in boolean mode) AND  ";
               params.push(white);
             }
+            query += " fullname like ? ) ";
+            params.push(obj.white);
           }
 
           if (blackLike) {
             if (whiteLike) {
               query += " and ";
             }
-            if (black.split(" ").length > 1) {
-              if (["'", "`"].includes(black[1])) {
-                black = black.slice(2);
-              }
-              query += ` whiteid = (SELECT id FROM ${playersTable} WHERE `;
-              if (black) {
-                query += " match(fullname) against(? in boolean mode) ";
-                params.push(black);
-              }
-              query += " fullname like ? ) ";
-              params.push(obj.black);
-            } else {
-              query += ` whiteid = (SELECT id FROM ${playersTable} WHERE `;
-              if (black) {
-                query += " match(fullname) against(?) AND ";
-                params.push(black);
-              }
-              query += " fullname like ? ) ";
+            if (["'", "`"].includes(black[1])) {
+              black = black.slice(2);
+            }
+            query += ` whiteid = (SELECT id FROM ${playersTable} WHERE `;
+            if (black) {
+              query += " match(fullname) against(? in boolean mode) AND ";
               params.push(black);
             }
+            query += " fullname like ? ) ";
+            params.push(obj.black);
           }
 
           if (!(minYear == 1475 && maxYear == new Date().getFullYear())) {
