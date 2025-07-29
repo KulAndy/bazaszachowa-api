@@ -318,6 +318,14 @@ WHERE t1.fullname like ?     `;
                        AND Month is not null
                        AND WhiteElo > 0
                        AND ${playersTable}.fullname like ?
+                       AND 
+                                (
+                                  Year < Year(CURRENT_DATE) OR
+                                  (
+                                    Year = Year(CURRENT_DATE) 
+                                    AND Month <= Month(CURRENT_DATE)
+                                    )
+                                )
 
                       UNION
 
@@ -328,9 +336,17 @@ WHERE t1.fullname like ?     `;
                        AND Month is not null
                        AND BlackElo > 0
                        AND ${playersTable}.fullname like ?
+                       AND 
+                                (
+                                  Year < Year(CURRENT_DATE) OR
+                                  (
+                                    Year = Year(CURRENT_DATE) 
+                                    AND Month <= Month(CURRENT_DATE)
+                                    )
+                                )
 
                        UNION
-                       
+
                          SELECT MAX(rating) as Elo,
                          Year(CURRENT_DATE()) as Year,
                          Month(CURRENT_DATE()) as Month
