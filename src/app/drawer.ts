@@ -1,5 +1,6 @@
-import gm from "gm";
 import domino from "domino";
+import { createCanvas, loadImage } from "canvas";
+
 export interface EloData {
   Elo: number;
   Month: number;
@@ -38,181 +39,18 @@ function calculateMinMaxElo(data: EloData[]): {
   }
   return { minElo, maxElo };
 }
-function drawGrid(
-  img: gm.State,
-  margin: number,
-  header: number,
-  width: number,
-  height: number,
-  k1: number,
-  k2: number,
-  maxGraphElo: number,
-  eloRange: number,
-  startDate: Date,
-  currentDate: Date,
-  period: number
-) {
-  img.stroke("black", 2).drawLine(margin, margin + header, margin, height);
-  let i = 0;
-  // eslint-disable-next-line no-unmodified-loop-condition
-  while (startDate <= currentDate) {
-    if (startDate.getMonth() === 0) {
-      if (yearsDiff(startDate, currentDate) % period === 0) {
-        img
-          .stroke("transparent", 0)
-          .drawText(
-            margin + k1 * i,
-            height + 20,
-            startDate.getFullYear().toString()
-          );
-        img
-          .stroke(period > 1 ? "red" : "black", 2)
-          .drawLine(margin + k1 * i, margin + header, margin + k1 * i, height);
-      } else {
-        img
-          .stroke("black", 2)
-          .drawLine(margin + k1 * i, margin + header, margin + k1 * i, height);
-      }
-    }
-    startDate.setMonth(startDate.getMonth() + 1);
-    i++;
-  }
-  for (let j = 0; j <= eloRange; j++) {
-    img
-      .stroke("transparent", 0)
-      .drawText(5, margin + header + k2 * j, (maxGraphElo - j * 50).toString());
-    img
-      .stroke("black", 2)
-      .drawLine(
-        margin,
-        margin + header + k2 * j,
-        margin + k1 * (i - 1),
-        margin + header + k2 * j
-      );
-  }
-  img.stroke("black", 2).drawLine(margin, height, width + margin, height);
-}
 const DRAWER: Drawer = {
   eloJPEG: async (data: EloData[], player: string): Promise<Buffer> => {
-    return new Promise((resolve, reject) => {
-      const header = 25;
-      const margin = 50;
-      const width = 750;
-      let height = 750;
-      const img = gm(width + margin * 2, height + margin * 2, "white");
-      height += header;
-
-      img
-        .font("Helvetica-Bold")
-        .fill("#000000")
-        .fontSize(24)
-        .drawText(25, 36, player, "North")
-        .font("Helvetica")
-        .fontSize(12)
-        .drawText(0, 72, "Wykres Elo", "North");
-      height += header;
-
-      const initialRating = data[0];
-      const { minElo, maxElo } = calculateMinMaxElo(data);
-      const monthNumber =
-        12 -
-        initialRating.Month +
-        (new Date().getFullYear() - initialRating.Year - 1) * 12 +
-        new Date().getMonth();
-      const eloRange = Math.ceil((maxElo - minElo) / 50) + 1;
-      const k1 = monthNumber === 1 ? width : width / (monthNumber - 1);
-      const k2 = (height - margin * 2) / eloRange;
-      const maxGraphElo = Math.ceil(maxElo / 50) * 50;
-      const minGraphElo = Math.floor(minElo / 50) * 50;
-
-      const startDate = new Date(
-        `${initialRating.Year}-${initialRating.Month}`
-      );
-      const currentDate = new Date();
-      currentDate.setDate(1);
-      const period = Math.ceil(yearsDiff(startDate, currentDate) / 22);
-
-      for (let j = 0; j <= eloRange; j++) {
-        const eloLabel = (maxGraphElo - j * 50).toString();
-        img.drawText(5, margin + header + k2 * j, eloLabel);
-      }
-
-      let i = 0;
-      const currentDateIter = new Date(startDate);
-      // eslint-disable-next-line no-unmodified-loop-condition
-      while (currentDateIter <= currentDate) {
-        if (currentDateIter.getMonth() === 0) {
-          const yearLabel = currentDateIter.getFullYear().toString();
-          img.drawText(margin + k1 * i, height + 20, yearLabel);
-        }
-        currentDateIter.setMonth(currentDateIter.getMonth() + 1);
-        i++;
-      }
-
-      drawGrid(
-        img,
-        margin,
-        header,
-        width,
-        height,
-        k1,
-        k2,
-        maxGraphElo,
-        eloRange,
-        startDate,
-        currentDate,
-        period
-      );
-
-      let currentBreak = data[0];
-      let currentPointX = margin;
-      const currentPercent =
-        (currentBreak.Elo - minGraphElo) / (maxGraphElo - minGraphElo);
-      let currentPointY =
-        header + margin + (1 - currentPercent) * (height - margin * 2);
-
-      img.stroke("blue", 3);
-      for (let i = 1; i < data.length; i++) {
-        const newBreak = data[i];
-        const monthDiff =
-          (newBreak.Year - currentBreak.Year) * 12 +
-          (newBreak.Month - currentBreak.Month);
-        const newCurrentPointX = currentPointX + k1 * monthDiff;
-        const newCurrentPercent =
-          (newBreak.Elo - minGraphElo) / (maxGraphElo - minGraphElo);
-        const newCurrentPointY =
-          header + margin + (1 - newCurrentPercent) * (height - margin * 2);
-
-        img.drawLine(
-          currentPointX,
-          currentPointY,
-          newCurrentPointX,
-          newCurrentPointY
-        );
-
-        currentPointX = newCurrentPointX;
-        currentPointY = newCurrentPointY;
-        currentBreak = newBreak;
-      }
-
-      img.stroke("black", 2);
-      img.drawLine(
-        currentPointX,
-        header + margin,
-        currentPointX,
-        header + margin + (height - margin * 2)
-      );
-
-      img.toBuffer("JPEG", (err, buffer) => {
-        if (err) {
-          console.error("Error generating JPEG:", err);
-          reject(err);
-        } else {
-          resolve(buffer);
-        }
-      });
-    });
+    const svg = await DRAWER.eloSVG(data, player);
+    const img = await loadImage(
+      "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64")
+    );
+    const canvas = createCanvas(750, 750);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, 750, 750);
+    return canvas.toBuffer("image/jpeg");
   },
+
   eloSVG: async (data: EloData[], player: string): Promise<string> => {
     const header = 10;
     const margin = 50;
