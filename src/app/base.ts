@@ -310,34 +310,35 @@ WHERE t1.fullname like ?     `;
       base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
 
     const query = `
-            SELECT Elo, Year, Month FROM (
-                SELECT MAX(Elo) as Elo, Year, Month FROM(
-                    SELECT WhiteElo as Elo, Year, Month FROM ${gamesTable}
-                        INNER JOIN ${playersTable}
-                        on WhiteID = ${playersTable}.id
-                        WHERE MATCH(${playersTable}.fullname) against(? in boolean mode)
-                        AND Month is not null
-                        AND WhiteElo > 0
-                        AND ${playersTable}.fullname like ?
-                        UNION
-                        SELECT BlackElo as Elo, Year, Month FROM ${gamesTable}
-                        INNER JOIN ${playersTable}
-                        on BlackID = ${playersTable}.id
-                        WHERE MATCH(${playersTable}.fullname) against(? in boolean mode)
-                        AND Month is not null
-                        AND BlackElo > 0
-                        AND ${playersTable}.fullname like ?
-                ) as pom
+               SELECT MAX(Elo) as Elo, Year, Month FROM(
+                   SELECT WhiteElo as Elo, Year, Month FROM ${gamesTable}
+                       INNER JOIN ${playersTable}
+                       on WhiteID = ${playersTable}.id
+                       WHERE MATCH(${playersTable}.fullname) against(? in boolean mode)
+                       AND Month is not null
+                       AND WhiteElo > 0
+                       AND ${playersTable}.fullname like ?
 
-                group by Year, Month
-                        ORDER by Year, Month
-            ) as pom2
-            UNION
-              SELECT MAX(rating) as Elo,
-              Year(CURRENT_DATE()) as Year,
-              Month(CURRENT_DATE()) as Month
-              FROM ${SETTINGS.fidePlayers}
-              WHERE MATCH(name) AGAINST(? in boolean mode)
+                      UNION
+
+                       SELECT BlackElo as Elo, Year, Month FROM ${gamesTable}
+                       INNER JOIN ${playersTable}
+                       on BlackID = ${playersTable}.id
+                       WHERE MATCH(${playersTable}.fullname) against(? in boolean mode)
+                       AND Month is not null
+                       AND BlackElo > 0
+                       AND ${playersTable}.fullname like ?
+
+                       UNION
+                       
+                         SELECT MAX(rating) as Elo,
+                         Year(CURRENT_DATE()) as Year,
+                         Month(CURRENT_DATE()) as Month
+                         FROM ${SETTINGS.fidePlayers}
+                         WHERE MATCH(name) AGAINST(? in boolean mode)
+               ) as pom
+               group by Year, Month
+                       ORDER by Year, Month
     `;
 
     return await this.execSearch<EloData>(query, [
