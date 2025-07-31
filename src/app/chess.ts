@@ -1,7 +1,7 @@
 interface Move {
   from: string;
   to: string;
-  promotion: string | null;
+  promotion?: string;
 }
 
 const CHESS = {
@@ -80,7 +80,7 @@ const CHESS = {
       return [];
     }
     const bytes = new Uint8Array(blob);
-    const result = [];
+    const result: Move[] = [];
 
     for (let i = 0; i < bytes.length; i += 2) {
       const packed = (bytes[i] << 8) | bytes[i + 1];
@@ -93,7 +93,6 @@ const CHESS = {
         const move: Move = {
           from: CHESS.SQUARES[b1] ?? "",
           to: CHESS.SQUARES[b2] ?? "",
-          promotion: null,
         };
 
         if (CHESS.PIECES[b3]) {
