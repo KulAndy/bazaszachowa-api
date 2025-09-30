@@ -52,7 +52,7 @@ interface Limits {
 const BASE = {
   async execSearch<T>(
     query: string,
-    params: (string | number)[] = []
+    params: (string | number)[] = [],
   ): Promise<T[]> {
     return new Promise((data) => {
       db.query(query, params, (error, result) => {
@@ -213,7 +213,7 @@ const BASE = {
   async searchPlayerOpeningGame(
     player: string,
     color: string | null = null,
-    opening: string | null = null
+    opening: string | null = null,
   ) {
     let query = `
     SELECT
@@ -375,8 +375,8 @@ WHERE t1.fullname like ?     `;
     let event;
     const minYear = Number(obj.minYear) || 1475;
     const maxYear = Number(obj.maxYear) || new Date().getFullYear();
-    const minEco = Number(obj.minEco) || 1;
-    const maxEco = Number(obj.maxEco) || 500;
+    const minEco = obj.minEco || "A00";
+    const maxEco = obj.maxEco || "E99";
     let whiteLike;
     let blackLike;
 
@@ -438,8 +438,8 @@ WHERE t1.fullname like ?     `;
           params.push(event);
         }
 
-        if (!(minEco == 1 && maxEco == 500)) {
-          query += `and ${ecoTable}.id BETWEEN ? AND ? `;
+        if (minEco != "A00" || maxEco != "E99") {
+          query += `and ${ecoTable}.ECO BETWEEN ? AND ? `;
           params.push(minEco);
           params.push(maxEco);
         }
@@ -478,8 +478,8 @@ WHERE t1.fullname like ?     `;
             params.push(event);
           }
 
-          if (!(minEco == 1 && maxEco == 500)) {
-            query += `and ${ecoTable}.id BETWEEN ? AND ? `;
+          if (minEco != "A00" || maxEco != "E99") {
+            query += `and ${ecoTable}.ECO BETWEEN ? AND ? `;
             params.push(minEco);
             params.push(maxEco);
           }
@@ -536,8 +536,8 @@ WHERE t1.fullname like ?     `;
           params.push(event);
         }
 
-        if (!(minEco == 1 && maxEco == 500)) {
-          query += `and ${ecoTable}.id BETWEEN ? AND ? `;
+        if (minEco != "A00" || maxEco != "E99") {
+          query += `and ${ecoTable}.ECO BETWEEN ? AND ? `;
           params.push(minEco);
           params.push(maxEco);
         }
@@ -592,8 +592,8 @@ WHERE t1.fullname like ?     `;
             params.push(event);
           }
 
-          if (!(minEco == 1 && maxEco == 500)) {
-            query += `and ${ecoTable}.id BETWEEN ? AND ? `;
+          if (minEco != "A00" || maxEco != "E99") {
+            query += `and ${ecoTable}.ECO BETWEEN ? AND ? `;
             params.push(minEco);
             params.push(maxEco);
           }
@@ -609,6 +609,7 @@ WHERE t1.fullname like ?     `;
 
     query +=
       " order BY year DESC,month DESC,day DESC,Event,Round desc, White, Black limit 10000";
+
     return this.execSearch<Game>(query, params);
   },
 };
