@@ -15,7 +15,6 @@ import gameRouter from "./route/game";
 import gamesRouter from "./route/games";
 import mailRouter from "./route/mail";
 import baseRouter from "./route/base";
-import redirectLegacyUrls from "./route/legacy";
 
 const app = express();
 const port = 3000;
@@ -34,10 +33,9 @@ app.use(limiter);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
-app.options("*", cors());
+app.options("/", cors());
 
 app.use("/uploads", express.static("uploads"));
-app.use(redirectLegacyUrls);
 app.use("/player", playerRouter);
 app.use("/players", playersRouter);
 app.use("/game", gameRouter);

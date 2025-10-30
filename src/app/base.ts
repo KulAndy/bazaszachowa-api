@@ -318,11 +318,11 @@ WHERE t1.fullname like ?     `;
                        AND Month is not null
                        AND WhiteElo > 0
                        AND ${playersTable}.fullname like ?
-                       AND 
+                       AND
                                 (
                                   Year < Year(CURRENT_DATE) OR
                                   (
-                                    Year = Year(CURRENT_DATE) 
+                                    Year = Year(CURRENT_DATE)
                                     AND Month <= Month(CURRENT_DATE)
                                     )
                                 )
@@ -336,11 +336,11 @@ WHERE t1.fullname like ?     `;
                        AND Month is not null
                        AND BlackElo > 0
                        AND ${playersTable}.fullname like ?
-                       AND 
+                       AND
                                 (
                                   Year < Year(CURRENT_DATE) OR
                                   (
-                                    Year = Year(CURRENT_DATE) 
+                                    Year = Year(CURRENT_DATE)
                                     AND Month <= Month(CURRENT_DATE)
                                     )
                                 )
