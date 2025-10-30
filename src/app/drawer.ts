@@ -43,7 +43,7 @@ const DRAWER: Drawer = {
   eloJPEG: async (data: EloData[], player: string): Promise<Buffer> => {
     const svg = await DRAWER.eloSVG(data, player);
     const img = await loadImage(
-      "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64")
+      "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64"),
     );
     const canvas = createCanvas(750, 750);
     const ctx = canvas.getContext("2d");
@@ -63,7 +63,7 @@ const DRAWER: Drawer = {
     svg.setAttribute("style", "background-color: white;");
     svg.setAttribute(
       "viewBox",
-      `0 0 ${width + 2 * margin} ${height + 2 * margin}`
+      `0 0 ${width + 2 * margin} ${height + 2 * margin}`,
     );
     const background = document.createElement("rect");
     background.setAttribute("style", "fill:#fff");
@@ -90,17 +90,7 @@ const DRAWER: Drawer = {
     title.setAttribute("text-anchor", "middle");
     title.setAttribute("font-size", "24");
     title.setAttribute("font-weight", "bold");
-    const subtitle = document.createElement("text");
-    subtitle.appendChild(document.createTextNode("Wykres Elo"));
-    subtitle.setAttribute(
-      "x",
-      ((width - 5 * subtitle.textContent!.length) / 2).toString()
-    );
-    subtitle.setAttribute("y", "50");
-    subtitle.setAttribute("text-anchor", "middle");
-    subtitle.setAttribute("font-size", "16");
     svg.appendChild(title);
-    svg.appendChild(subtitle);
     const maxPoint = header + margin;
     let minPoint = header + margin;
     const startDate = new Date(`${initialRating.Year}-${initialRating.Month}`);
@@ -123,7 +113,7 @@ const DRAWER: Drawer = {
           year.setAttribute("x", (margin + k1 * i).toString());
           year.setAttribute("y", (height + 20).toString());
           year.appendChild(
-            document.createTextNode(startDate.getFullYear().toString())
+            document.createTextNode(startDate.getFullYear().toString()),
           );
           svg.appendChild(year);
           const line = document.createElement("line");
@@ -135,7 +125,7 @@ const DRAWER: Drawer = {
             "style",
             period > 1
               ? "stroke:#f00;stroke-width:2"
-              : "stroke:#000;stroke-width:2"
+              : "stroke:#000;stroke-width:2",
           );
           svg.appendChild(line);
         } else {
@@ -156,7 +146,7 @@ const DRAWER: Drawer = {
       elo.setAttribute("x", "5");
       elo.setAttribute("y", (margin + header + k2 * j).toString());
       elo.appendChild(
-        document.createTextNode((maxGraphElo - j * 50).toString())
+        document.createTextNode((maxGraphElo - j * 50).toString()),
       );
       svg.appendChild(elo);
       const line = document.createElement("line");
@@ -195,7 +185,7 @@ const DRAWER: Drawer = {
       line.setAttribute("y1", currentPointY.toString());
       line.setAttribute(
         "x2",
-        (currentPointX + k1 * (monthDiff - 1)).toString()
+        (currentPointX + k1 * (monthDiff - 1)).toString(),
       );
       line.setAttribute("y2", currentPointY.toString());
       line.setAttribute("style", "stroke:#00f;stroke-width:4");
@@ -203,7 +193,7 @@ const DRAWER: Drawer = {
       const line2 = document.createElement("line");
       line2.setAttribute(
         "x1",
-        (currentPointX + k1 * (monthDiff - 1)).toString()
+        (currentPointX + k1 * (monthDiff - 1)).toString(),
       );
       line2.setAttribute("y1", currentPointY.toString());
       line2.setAttribute("x2", newCurrentPointX.toString());
