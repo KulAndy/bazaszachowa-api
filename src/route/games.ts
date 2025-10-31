@@ -23,7 +23,7 @@ router.all("/", async (req, res) => {
   }
 });
 
-router.all("/opening/:player/:color/:opening(.*)?", async (req, res) => {
+router.all(["/opening/:player/:color", "/opening/:player/:color/:opening"], async (req, res) => {
   const { player, color, opening = null } = req.params;
   if (!["white", "black"].includes(color) || typeof color !== "string") {
     return res.status(400).send([]);
