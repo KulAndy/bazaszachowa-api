@@ -1,5 +1,5 @@
 import express from "express";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 
 import SETTINGS from "../app/settings";
 
@@ -13,20 +13,18 @@ type FileMetaData = {
   description?: string;
 };
 
-const getFileMetaData = (
-  fileId: string
-): Promise<AxiosResponse<FileMetaData>> => {
-  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,modifiedTime,webViewLink,size,description&key=${SETTINGS.key}`;
-  return axios.get<FileMetaData>(url);
+const getFilesInFolder = async (folderId: string): Promise<FileMetaData[]> => {
+  const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,modifiedTime,webViewLink,size,description)&key=${SETTINGS.key}`;
+  const response = await axios.get<{ files: FileMetaData[] }>(url);
+  return response.data.files;
 };
 
 router.get("/dumps", async (_req, res) => {
   try {
-    const responses = await Promise.all([
-      getFileMetaData("1g7LmtRscJUIURSG3_6-rbX9n5TyrtgTb"),
-      getFileMetaData("1D8BNRql7XHrhlhUXp-fSnIFZvT0jVF-y"),
-    ]);
-    res.json(responses.map((r) => r.data));
+    const folderId = "1fEbetzoz0CgZGDcEj7HVkXAdtWB5ci_U";
+    const files = await getFilesInFolder(folderId);
+
+    res.json(files);
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Internal Server Error");
