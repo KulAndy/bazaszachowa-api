@@ -1,3 +1,4 @@
+import { defineConfig } from "eslint/config";
 import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
@@ -9,7 +10,6 @@ import pluginUnicorn from "eslint-plugin-unicorn";
 import pluginSonar from "eslint-plugin-sonarjs";
 import perfectionist from "eslint-plugin-perfectionist";
 import * as regexpPlugin from "eslint-plugin-regexp";
-import { defineConfig } from "eslint/config";
 
 export default defineConfig([
   js.configs.recommended,
@@ -41,7 +41,6 @@ export default defineConfig([
     },
     rules: {
       "n/no-missing-import": "off",
-      "n/no-unpublished-import": "off",
       "n/no-unsupported-features/es-syntax": "off",
       "import/order": [
         "error",
@@ -62,11 +61,9 @@ export default defineConfig([
           },
         },
       ],
-      "import/no-unresolved": "off",
-      "import/no-duplicates": "error",
       "n/file-extension-in-import": "off",
       "perfectionist/sort-imports": 0,
-      "promise/catch-or-return": "warn",
+      "promise/catch-or-return": "error",
       "promise/no-return-wrap": "error",
       "security/detect-object-injection": "off",
       "unicorn/better-regex": "error",
@@ -78,24 +75,21 @@ export default defineConfig([
       "unicorn/no-null": "off",
       "unicorn/number-literal-case": "off",
       "sonarjs/cognitive-complexity": ["warn", 200],
-      "sonarjs/no-identical-functions": "warn",
+      "sonarjs/no-identical-functions": "error",
       "sonarjs/no-nested-switch": "error",
-      "sonarjs/no-small-switch": "warn",
-      "@typescript-eslint/no-unsafe-member-access": "off",
+      "sonarjs/no-small-switch": "error",
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/prefer-optional-chain": "error",
       "@typescript-eslint/unified-signatures": "off",
       "@typescript-eslint/no-misused-promises": "error",
       "@typescript-eslint/no-unnecessary-type-arguments": "error",
-      "@typescript-eslint/prefer-nullish-coalescing": "off",
       "@typescript-eslint/dot-notation": "error",
-      "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/ban-ts-comment": [
         "error",
         { "ts-ignore": "allow-with-description" },
       ],
-      "no-unused-vars": ["warn", { args: "none", ignoreRestSiblings: true }],
+      "no-unused-vars": ["error", { args: "none", ignoreRestSiblings: true }],
       "prefer-const": "error",
       "no-console": ["warn", { allow: ["warn", "error", "info"] }],
       "no-use-before-define": ["error", { functions: false, classes: true }],

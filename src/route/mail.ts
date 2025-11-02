@@ -98,6 +98,7 @@ router.post("/send", (request, response) => {
           void fs.promises.unlink(request.file.path);
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         response.send("Email sent: " + info.response);
       },
     );
