@@ -1,5 +1,6 @@
-import domino from "domino";
+/* eslint-disable unicorn/prefer-dom-node-append */
 import { createCanvas, loadImage } from "canvas";
+import domino from "domino";
 
 export interface EloData {
   Elo: number;
@@ -8,28 +9,12 @@ export interface EloData {
 }
 interface Drawer {
   eloJPEG: (data: EloData[], player: string) => Promise<Buffer>;
-  eloSVG: (data: EloData[], player: string) => Promise<string>;
+  eloSVG: (data: EloData[], player: string) => string;
 }
 const document = domino.createDocument();
-function yearsDiff(date1: Date, date2: Date): number {
-  if (date1.getTime() === date2.getTime()) {
-    return 0;
-  }
-  let diff = -1;
-  const gDate =
-    date1 > date2 ? new Date(date1.getTime()) : new Date(date2.getTime());
-  const lDate =
-    date1 < date2 ? new Date(date1.getTime()) : new Date(date2.getTime());
-  // eslint-disable-next-line no-unmodified-loop-condition
-  while (lDate < gDate) {
-    diff++;
-    lDate.setFullYear(lDate.getFullYear() + 1);
-  }
-  return diff;
-}
 function calculateMinMaxElo(data: EloData[]): {
-  minElo: number;
   maxElo: number;
+  minElo: number;
 } {
   let minElo = data[0].Elo;
   let maxElo = data[0].Elo;
@@ -37,21 +22,35 @@ function calculateMinMaxElo(data: EloData[]): {
     minElo = Math.min(minElo, item.Elo);
     maxElo = Math.max(maxElo, item.Elo);
   }
-  return { minElo, maxElo };
+  return { maxElo, minElo };
+}
+function yearsDiff(date1: Date, date2: Date): number {
+  if (date1.getTime() === date2.getTime()) {
+    return 0;
+  }
+  let diff = -1;
+  const gDate = date1 > date2 ? new Date(date1) : new Date(date2);
+  const lDate = date1 < date2 ? new Date(date1) : new Date(date2);
+  // eslint-disable-next-line no-unmodified-loop-condition
+  while (lDate < gDate) {
+    diff++;
+    lDate.setFullYear(lDate.getFullYear() + 1);
+  }
+  return diff;
 }
 const DRAWER: Drawer = {
   eloJPEG: async (data: EloData[], player: string): Promise<Buffer> => {
-    const svg = await DRAWER.eloSVG(data, player);
+    const svg = DRAWER.eloSVG(data, player);
     const img = await loadImage(
       "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64"),
     );
     const canvas = createCanvas(750, 750);
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0, 750, 750);
+    const context = canvas.getContext("2d");
+    context.drawImage(img, 0, 0, 750, 750);
     return canvas.toBuffer("image/jpeg");
   },
 
-  eloSVG: async (data: EloData[], player: string): Promise<string> => {
+  eloSVG: (data: EloData[], player: string): string => {
     const header = 10;
     const margin = 50;
     const width = 750;
@@ -72,7 +71,7 @@ const DRAWER: Drawer = {
     svg.appendChild(background);
     height += header;
     const initialRating = data[0];
-    const { minElo, maxElo } = calculateMinMaxElo(data);
+    const { maxElo, minElo } = calculateMinMaxElo(data);
     const monthNumber =
       12 -
       initialRating.Month +
@@ -104,22 +103,22 @@ const DRAWER: Drawer = {
     leftBorder.setAttribute("y2", height.toString());
     leftBorder.setAttribute("style", "stroke:#000;stroke-width:2");
     svg.appendChild(leftBorder);
-    let i = 0;
+    let index = 0;
     // eslint-disable-next-line no-unmodified-loop-condition
     while (startDate <= currentDate) {
       if (startDate.getMonth() === 0) {
         if (yearsDiff(startDate, currentDate) % period === 0) {
           const year = document.createElement("text");
-          year.setAttribute("x", (margin + k1 * i).toString());
+          year.setAttribute("x", (margin + k1 * index).toString());
           year.setAttribute("y", (height + 20).toString());
           year.appendChild(
             document.createTextNode(startDate.getFullYear().toString()),
           );
           svg.appendChild(year);
           const line = document.createElement("line");
-          line.setAttribute("x1", (margin + k1 * i).toString());
+          line.setAttribute("x1", (margin + k1 * index).toString());
           line.setAttribute("y1", (margin + header).toString());
-          line.setAttribute("x2", (margin + k1 * i).toString());
+          line.setAttribute("x2", (margin + k1 * index).toString());
           line.setAttribute("y2", height.toString());
           line.setAttribute(
             "style",
@@ -130,38 +129,38 @@ const DRAWER: Drawer = {
           svg.appendChild(line);
         } else {
           const line = document.createElement("line");
-          line.setAttribute("x1", (margin + k1 * i).toString());
+          line.setAttribute("x1", (margin + k1 * index).toString());
           line.setAttribute("y1", (margin + header).toString());
-          line.setAttribute("x2", (margin + k1 * i).toString());
+          line.setAttribute("x2", (margin + k1 * index).toString());
           line.setAttribute("y2", height.toString());
           line.setAttribute("style", "stroke:#000;stroke-width:2");
           svg.appendChild(line);
         }
       }
       startDate.setMonth(startDate.getMonth() + 1);
-      i++;
+      index++;
     }
-    for (let j = 0; j <= eloRange; j++) {
+    for (let index2 = 0; index2 <= eloRange; index2++) {
       const elo = document.createElement("text");
       elo.setAttribute("x", "5");
-      elo.setAttribute("y", (margin + header + k2 * j).toString());
+      elo.setAttribute("y", (margin + header + k2 * index2).toString());
       elo.appendChild(
-        document.createTextNode((maxGraphElo - j * 50).toString()),
+        document.createTextNode((maxGraphElo - index2 * 50).toString()),
       );
       svg.appendChild(elo);
       const line = document.createElement("line");
       line.setAttribute("x1", margin.toString());
-      line.setAttribute("y1", (margin + header + k2 * j).toString());
-      line.setAttribute("x2", (margin + k1 * (i - 1)).toString());
-      line.setAttribute("y2", (margin + header + k2 * j).toString());
+      line.setAttribute("y1", (margin + header + k2 * index2).toString());
+      line.setAttribute("x2", (margin + k1 * (index - 1)).toString());
+      line.setAttribute("y2", (margin + header + k2 * index2).toString());
       line.setAttribute("style", "stroke:#000;stroke-width:2");
       svg.appendChild(line);
-      minPoint = margin + header + k2 * j;
+      minPoint = margin + header + k2 * index2;
     }
     const bottomBorder = document.createElement("line");
     bottomBorder.setAttribute("x1", margin.toString());
     bottomBorder.setAttribute("y1", height.toString());
-    bottomBorder.setAttribute("x2", (margin + k1 * (i - 1)).toString());
+    bottomBorder.setAttribute("x2", (margin + k1 * (index - 1)).toString());
     bottomBorder.setAttribute("y2", height.toString());
     bottomBorder.setAttribute("style", "stroke:#000;stroke-width:2");
     svg.appendChild(bottomBorder);
@@ -170,8 +169,8 @@ const DRAWER: Drawer = {
     const currentPercent =
       1 - (initialRating.Elo - minGraphElo) / (maxGraphElo - minGraphElo);
     let currentPointY = currentPercent * (minPoint - maxPoint) + maxPoint;
-    for (let i = 1; i < data.length; i++) {
-      const newBreak = data[i];
+    for (let index2 = 1; index2 < data.length; index2++) {
+      const newBreak = data[index2];
       const monthDiff =
         (newBreak.Year - currentBreak.Year) * 12 +
         (newBreak.Month - currentBreak.Month);

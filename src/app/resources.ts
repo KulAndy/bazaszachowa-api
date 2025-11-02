@@ -2,9 +2,9 @@ import axios from "axios";
 import * as iconv from "iconv-lite";
 
 interface PlayerDetails {
+  fide_id: string;
   id: string;
   kat: string;
-  fide_id: string;
   name: string;
 }
 
@@ -16,38 +16,42 @@ const RESOURCES: Resources = {
   async crData(name: string): Promise<PlayerDetails[]> {
     try {
       const response = await axios.post(
+        // eslint-disable-next-line sonarjs/no-clear-text-protocols
         "http://www.cr-pzszach.pl/ew/viewpage.php?page_id=3",
         new URLSearchParams({
+          szukaj: "szukaj",
           typ_szukania: "szukaj_czlonka",
           wyszukiwany_ciag: name,
-          szukaj: "szukaj",
         }),
         {
-          responseType: "arraybuffer",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-        }
+          responseType: "arraybuffer",
+        },
       );
 
-      const body = iconv.decode(response.data, "iso-8859-2").toString();
+      const buffer = Buffer.from(response.data);
+      const body = iconv.decode(buffer, "iso-8859-2");
+
       const pattern =
-        /<tr>(<td.*>.*<\/td>)+(.*pers_id.*).*(<td.*>.*<\/td>)+<\/tr>/gim;
+        /<tr><td[^\n\r>\u2028\u2029]*>.*<\/td>.*pers_id.*<td[^\n\r>\u2028\u2029]*>.*<\/td><\/tr>/gi;
       const matches = body.match(pattern);
 
       if (matches) {
-        const dirt = /<\/?t[rd]>|<a [a-z=".?_0-9&]+>|<sup>.*<\/sup>|<\/a>/gim;
-        const spliRegex = /<td [a-z=".?_0-9&-:; ]+>/gi;
+        const dirt = /<\/?t[dr]>|<a [\w"&.=?]+>|<sup>.*<\/sup>|<\/a>/gi;
+        // eslint-disable-next-line regexp/no-obscure-range, sonarjs/duplicates-in-character-class
+        const spliRegex = /<td [\w "&-:;=?]+>/i;
 
         const playersDetails: PlayerDetails[] = matches
-          .filter((match) => match)
+          .filter(Boolean)
           .map((match) => {
-            const cleanedMatch = match.replace(dirt, "");
+            const cleanedMatch = match.replaceAll(dirt, "");
             const playerData = cleanedMatch.split(spliRegex).slice(1);
             return {
+              fide_id: playerData[3],
               id: playerData[1],
               kat: playerData[2],
-              fide_id: playerData[3],
               name: playerData[5],
             };
           });
@@ -56,8 +60,8 @@ const RESOURCES: Resources = {
       } else {
         return [];
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       return [];
     }
   },

@@ -1,10 +1,46 @@
 interface Move {
   from: string;
-  to: string;
   promotion?: string;
+  to: string;
 }
 
 const CHESS = {
+  movesBin2obj: (blob: ArrayBuffer | null) => {
+    if (blob === null) {
+      return [];
+    }
+    const bytes = new Uint8Array(blob);
+    const result: Move[] = [];
+
+    for (let index = 0; index < bytes.length; index += 2) {
+      const packed = (bytes[index] << 8) | bytes[index + 1];
+
+      const b1 = (packed >> 10) & 0x3f;
+      const b2 = (packed >> 4) & 0x3f;
+      const b3 = packed & 0x07;
+
+      try {
+        const move: Move = {
+          from: CHESS.SQUARES[b1] ?? "",
+          to: CHESS.SQUARES[b2] ?? "",
+        };
+
+        if (CHESS.PIECES[b3]) {
+          move.promotion = CHESS.PIECES[b3];
+        }
+
+        result.push(move);
+      } catch (error) {
+        console.error(error);
+        break;
+      }
+    }
+
+    return result;
+  },
+
+  PIECES: ["p", "n", "b", "r", "q", "k", null],
+
   SQUARES: [
     "a1",
     "b1",
@@ -72,42 +108,6 @@ const CHESS = {
     "h8",
     null,
   ],
-
-  PIECES: ["p", "n", "b", "r", "q", "k", null],
-
-  movesBin2obj: (blob: ArrayBuffer | null) => {
-    if (blob === null) {
-      return [];
-    }
-    const bytes = new Uint8Array(blob);
-    const result: Move[] = [];
-
-    for (let i = 0; i < bytes.length; i += 2) {
-      const packed = (bytes[i] << 8) | bytes[i + 1];
-
-      const b1 = (packed >> 10) & 0x3f;
-      const b2 = (packed >> 4) & 0x3f;
-      const b3 = packed & 0x07;
-
-      try {
-        const move: Move = {
-          from: CHESS.SQUARES[b1] ?? "",
-          to: CHESS.SQUARES[b2] ?? "",
-        };
-
-        if (CHESS.PIECES[b3]) {
-          move.promotion = CHESS.PIECES[b3];
-        }
-
-        result.push(move);
-      } catch (error) {
-        console.error(error);
-        break;
-      }
-    }
-
-    return result;
-  },
 };
 
 export default CHESS;

@@ -4,9 +4,11 @@ const router = express.Router();
 import BASE from "../app/base";
 import CHESS from "../app/chess";
 
-router.all("/:base/:id", async (req, res) => {
-  const { base, id } = req.params;
-  if (!base || !id) {return res.status(400);}
+router.all("/:base/:id", async (request, response) => {
+  const { base, id } = request.params;
+  if (!base || !id) {
+    return response.status(400);
+  }
 
   try {
     const result = await BASE.getGame(id, base);
@@ -14,25 +16,25 @@ router.all("/:base/:id", async (req, res) => {
       ...item,
       moves: CHESS.movesBin2obj(item.moves),
     }));
-    res.json(parsed);
+    response.json(parsed);
   } catch (error) {
     console.error(error);
-    res.status(400).send([
+    response.status(400).send([
       {
-        id: 12347922,
-        moves: [],
-        Event: null,
-        Site: null,
-        Year: null,
-        Month: null,
-        Day: null,
-        Round: null,
-        White: "N, N",
         Black: "N, N",
-        Result: "0-1",
-        WhiteElo: null,
         BlackElo: null,
+        Day: null,
         ECO: null,
+        Event: null,
+        id: 12_347_922,
+        Month: null,
+        moves: [],
+        Result: "0-1",
+        Round: null,
+        Site: null,
+        White: "N, N",
+        WhiteElo: null,
+        Year: null,
       },
     ]);
   }

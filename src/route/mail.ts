@@ -1,79 +1,87 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import express from "express";
 import multer, { StorageEngine } from "multer";
 import nodemailer from "nodemailer";
-import path from "node:path";
-import fs from "node:fs";
 
 import Settings from "../app/settings";
 
 const router = express.Router();
-const uploadDir: string = path.resolve(__dirname, "../../uploads/");
+// eslint-disable-next-line unicorn/prefer-module
+const uploadDirectory: string = path.resolve(__dirname, "../../uploads/");
 
 const storage: StorageEngine = multer.diskStorage({
   destination: (
-    _req,
+    _request,
     _file,
-    cb: (error: Error | null, destination: string) => void
+    callback: (error: Error | null, destination: string) => void,
   ) => {
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
+    void fs.promises
+      .mkdir(uploadDirectory, { recursive: true })
+      .catch(() => {})
+      .finally(() => {
+        callback(null, uploadDirectory);
+      });
   },
   filename: (
-    _req,
+    _request,
     file,
-    cb: (error: Error | null, filename: string) => void
+    callback: (error: Error | null, filename: string) => void,
   ) => {
-    cb(
+    callback(
       null,
-      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname),
     );
   },
 });
 
 const upload = multer({
-  storage: storage,
   limits: { fileSize: 1024 * 1024 * 200 },
+  storage: storage,
 }).single("attachment");
 
-router.post("/send", (req, res) => {
-  upload(req, res, (err: any) => {
-    if (err) {
-      console.error(err);
-      return res.status(400).send("Error uploading file");
+router.post("/send", (request, response) => {
+  upload(request, response, (error) => {
+    if (error) {
+      console.error(error);
+      return response.status(400).send("Error uploading file");
     }
 
-    const { email, subject, content } = req.body;
+    const { content, email, subject } = request.body as {
+      content: string;
+      email: string;
+      subject: string;
+    };
 
-    const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex: RegExp = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).send("Invalid email");
+      return response.status(400).send("Invalid email");
     }
 
     const transporter = nodemailer.createTransport({
-      host: Settings.mailServer,
-      port: Settings.mailPort.smtp[Settings.mailPort.smtp.length - 1],
-      secure: false,
       auth: {
-        user: Settings.mailUser,
         pass: Settings.mailPassword,
+        user: Settings.mailUser,
       },
+      host: Settings.mailServer,
+      port: Settings.mailPort.smtp.at(-1),
       replyTo: email,
+      secure: false,
     });
 
     const mailOptions: nodemailer.SendMailOptions = {
+      attachments: [],
       from: Settings.mailUser,
-      to: Settings.adminContact,
       subject,
       text: `${content}\n\n kontakt ${email}`,
-      attachments: [],
+      to: Settings.adminContact,
     };
 
-    if (req.file) {
-      mailOptions.attachments!.push({
-        filename: req.file.originalname,
-        path: req.file.path,
+    if (request.file) {
+      mailOptions.attachments?.push({
+        filename: request.file.originalname,
+        path: request.file.path,
       });
     }
 
@@ -82,15 +90,16 @@ router.post("/send", (req, res) => {
       (error: Error | null, info: nodemailer.SentMessageInfo) => {
         if (error) {
           console.error(error);
-          return res.status(500).send(error.toString());
+          return response.status(500).send(error.toString());
         }
 
-        if (req.file) {
-          fs.unlinkSync(req.file.path);
+        if (request.file) {
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
+          void fs.promises.unlink(request.file.path);
         }
 
-        res.send("Email sent: " + info.response);
-      }
+        response.send("Email sent: " + info.response);
+      },
     );
   });
 });

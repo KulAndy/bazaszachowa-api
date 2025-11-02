@@ -1,303 +1,58 @@
 import mysql from "mysql";
 
 import SETTINGS from "../app/settings";
+
 import type { EloData } from "./drawer";
 
-const db = mysql.createPool({
-  host: SETTINGS.host,
-  user: SETTINGS.user,
-  password: SETTINGS.password,
+const database = mysql.createPool({
   database: SETTINGS.base,
+  host: SETTINGS.host,
+  password: SETTINGS.password,
+  user: SETTINGS.user,
 });
+
+interface Game {
+  Black: null | string;
+  BlackElo: null | number;
+  Day: null | number;
+  ECO: null | string;
+  Event: null | string;
+  id: null | number;
+  Month: null | number;
+  moves: ArrayBuffer | null;
+  Result: null | string;
+  Round: null | string;
+  White: null | string;
+  WhiteElo: null | number;
+  Year: null | number;
+}
+
+interface Limits {
+  maxElo: null | number;
+  maxYear: null | number;
+  minYear: null | number;
+}
 
 interface Player {
   fullname: string;
 }
 
-interface Game {
-  id: Number | null;
-  moves: ArrayBuffer | null;
-  Event: String | null;
-  Year: Number | null;
-  Month: Number | null;
-  Day: Number | null;
-  Round: string | null;
-  White: String | null;
-  Black: string | null;
-  Result: String | null;
-  WhiteElo: Number | null;
-  BlackElo: Number | null;
-  ECO: string | null;
-}
-
 interface SearchGameParameters {
-  searching: string;
-  table: string;
-  white: string;
-  black: string;
-  ignore: string;
-  event: string;
-  minYear: string;
-  maxYear: string;
-  minEco: string;
-  maxEco: string;
-}
-
-interface Limits {
-  maxElo: number | null;
-  minYear: number | null;
-  maxYear: number | null;
+  black?: string;
+  event?: string;
+  ignore?: string;
+  maxEco?: string;
+  maxYear?: string;
+  minEco?: string;
+  minYear?: string;
+  searching?: string;
+  table?: string;
+  white?: string;
 }
 
 const BASE = {
-  async execSearch<T>(
-    query: string,
-    params: (string | number)[] = [],
-  ): Promise<T[]> {
-    return new Promise((data) => {
-      db.query(query, params, (error, result) => {
-        if (error) {
-          data([]);
-          console.error(query);
-          console.error(params);
-          throw error;
-        }
-        try {
-          data(result);
-        } catch (error) {
-          data([]);
-          console.error(query);
-          console.error(params);
-
-          throw error;
-        }
-      });
-    });
-  },
-
-  fulltextName(name: string) {
-    let nameFul = name.replace(/[`'-]/g, " ");
-    if (nameFul[0] == "'" || nameFul[0] == "`") {
-      nameFul = nameFul.substring(1);
-    }
-    nameFul = nameFul.replace(/[^a-zA-Z0-9\s]/g, "");
-    nameFul = nameFul.replace(/\b\w{1,2}\b/g, "");
-    nameFul = nameFul.replace(/\s+/g, " ");
-    nameFul = nameFul.trim();
-    nameFul = nameFul
-      .split(" ")
-      .filter(Boolean)
-      .map((word) => "+" + word)
-      .join(" ");
-    return nameFul;
-  },
-
-  async fideData(name: string) {
-    const params = [name];
-    const nameFul = this.fulltextName(name);
-    let query = `SELECT
-      fideid,
-      name,
-      title,
-      rating,
-      rapid_rating,
-      blitz_rating,
-      birthday
-      FROM
-      fide_players
-      WHERE NAME LIKE ?`;
-    if (nameFul) {
-      params.push(nameFul);
-      query += ` AND MATCH(NAME) AGAINST(
-          ? IN BOOLEAN MODE
-      )`;
-    }
-    const result = await this.execSearch(query, params);
-    return result;
-  },
-
-  async searchPlayer(player: string, table: string, forFulltext = false) {
-    player += "%";
-
-    let query = `
-    SELECT
-    fullname
-    FROM ${
-      table == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
-    } WHERE fullname like ? `;
-
-    let result = await this.execSearch<Player>(query, [player]);
-    if (result.length == 0) {
-      query = `
-    SELECT
-    fullname
-    FROM ${SETTINGS.wholePlayers} WHERE fullname like ? `;
-
-      result = await this.execSearch<Player>(query, [player]);
-    }
-    if (forFulltext) {
-      for (let i = 0; i < result.length; i++) {
-        result[i].fullname = this.fulltextName(result[i].fullname.trim());
-      }
-    }
-    result = [...new Set(result)];
-
-    return result.map((a) => a.fullname);
-  },
-
-  async getGame(id: number | string, base: string) {
-    const playersTable =
-      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
-
-    const table = base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
-    const query = `SELECT
-    ${table}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${
-      SETTINGS.sitesTable
-    }.site as Site, ${table}.Year, ${table}.Month, ${table}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo,${
-      SETTINGS.ecoTable
-    }.ECO as  ECO
-    FROM ${table}
-    inner join ${playersTable} as t1 on WhiteID = t1.id
-    inner join ${playersTable} as t2 on BlackID = t2.id
-    LEFT join ${SETTINGS.eventsTable} on ${table}.EventID = ${
-      SETTINGS.eventsTable
-    }.id
-    LEFT join ${SETTINGS.sitesTable} on ${table}.siteID = ${
-      SETTINGS.sitesTable
-    }.id
-    LEFT join ${SETTINGS.ecoTable} on ${table}.ecoID = ${SETTINGS.ecoTable}.id
-    WHERE ${table}.id = ${Number(id)}
-    `;
-    return await this.execSearch<Game>(query);
-  },
-
-  async playerOpeningStatsColor(player: string, color: string) {
-    let fulltextPlayer = JSON.parse(JSON.stringify(player));
-    if (fulltextPlayer.split(" ").length > 1) {
-      fulltextPlayer = this.fulltextName(fulltextPlayer);
-    }
-    const params = [player];
-    let query = `SELECT opening,
-        COUNT(*) as count,
-        Round(SUM(substring_index(REPLACE(Result, '1/2','0.5'),'-',1))/COUNT(*) *100,2) as percent
-        FROM ${SETTINGS.allTable}
-        inner join ${SETTINGS.allPlayers} as t1 on ${
-      color == "white" ? "whiteID" : "BlackID"
-    } = t1.id
-        INNER JOIN ${SETTINGS.ecoTable}
-        on ${SETTINGS.allTable}.ecoID = ${SETTINGS.ecoTable}.id
-        WHERE  t1.fullname like ?
-        `;
-
-    if (fulltextPlayer) {
-      params.push(fulltextPlayer);
-      query += " AND MATCH(t1.fullname) against(? in boolean mode)";
-    }
-
-    query += ` GROUP BY opening
-        ORDER by COUNT(*) DESC, opening`;
-
-    return await this.execSearch(query, params);
-  },
-
-  async playerOpeningStats(player: string) {
-    const whites = await this.playerOpeningStatsColor(player, "white");
-    const blacks = await this.playerOpeningStatsColor(player, "black");
-    const stats = {
-      whites: whites,
-      blacks: blacks,
-    };
-    return stats;
-  },
-
-  async searchPlayerOpeningGame(
-    player: string,
-    color: string | null = null,
-    opening: string | null = null,
-  ) {
-    let query = `
-    SELECT
-        ${SETTINGS.allTable}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${SETTINGS.allTable}.Year, ${SETTINGS.allTable}.Month, ${SETTINGS.allTable}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${SETTINGS.ecoTable}.ECO
-        FROM ${SETTINGS.allTable}
-        inner join ${SETTINGS.allPlayers} as t1 on WhiteID = t1.id
-        inner join ${SETTINGS.allPlayers} as t2 on BlackID = t2.id
-        LEFT join ${SETTINGS.eventsTable} on ${SETTINGS.allTable}.EventID = ${SETTINGS.eventsTable}.id
-        LEFT join ${SETTINGS.sitesTable} on ${SETTINGS.allTable}.siteID = ${SETTINGS.sitesTable}.id
-        LEFT JOIN ${SETTINGS.ecoTable} on ${SETTINGS.allTable}.ecoID = ${SETTINGS.ecoTable}.ID
-`;
-    let fulltextPlayer = JSON.parse(JSON.stringify(player));
-    if (fulltextPlayer.split(" ").length > 1) {
-      fulltextPlayer = this.fulltextName(fulltextPlayer);
-    }
-    const params = [player];
-    if (fulltextPlayer) {
-      params.push(fulltextPlayer);
-    }
-    if (color == "white") {
-      query += `
-        WHERE t1.fullname like ?
-`;
-      if (fulltextPlayer) {
-        query += " AND match(t1.fullname) against(? in boolean mode) ";
-      }
-      if (opening) {
-        query += " AND opening like ?";
-        params.push(opening);
-      }
-      query +=
-        "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black LIMIT 10000";
-    } else if (color == "black") {
-      query += `
-        WHERE t2.fullname like ?
-`;
-      if (fulltextPlayer) {
-        query += " AND match(t2.fullname) against(? in boolean mode) ";
-      }
-      if (opening) {
-        query += "AND opening like ?";
-        params.push(opening);
-      }
-      query +=
-        "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black LIMIT 10000";
-    }
-    return await this.execSearch<Game>(query, params);
-  },
-
-  async minMaxYearEco(player: string, base: string = "all") {
-    let fulltextPlayer = JSON.parse(JSON.stringify(player));
-    if (fulltextPlayer.split(" ").length > 1) {
-      fulltextPlayer = this.fulltextName(fulltextPlayer);
-    }
-    const params = [];
-    params.push(player);
-    let query = `
-SELECT max(WhiteElo) as maxElo, min(Year) as minYear, max(Year) as maxYear
-FROM ${base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable}
-inner join ${
-      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
-    } as t1 on WhiteID = t1.id
-WHERE t1.fullname like ?`;
-    if (fulltextPlayer) {
-      params.push(fulltextPlayer);
-      query += " AND MATCH(t1.fullname) against(? in boolean mode) ";
-    }
-    params.push(player);
-    query += `
-UNION
-SELECT max(BlackElo) as maxElo, min(Year) as minYear, max(Year) as maxYear
-FROM ${base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable}
-inner join ${
-      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
-    } as t1 on BlackID = t1.id
-WHERE t1.fullname like ?     `;
-    if (fulltextPlayer) {
-      params.push(fulltextPlayer);
-      query += " AND MATCH(t1.fullname) against(? in boolean mode) ";
-    }
-    return await this.execSearch<Limits>(query, params);
-  },
   async eloHistory(player: string, base = "all") {
-    let fulltextPlayer = JSON.parse(JSON.stringify(player));
+    let fulltextPlayer = player;
     if (fulltextPlayer.split(" ").length === 0) {
       return [];
     }
@@ -366,33 +121,197 @@ WHERE t1.fullname like ?     `;
     ]);
   },
 
-  async searchGames(obj: SearchGameParameters) {
-    const searching = obj.searching || "classic";
+  async execSearch<T>(
+    query: string,
+    parameters: (number | string | undefined)[] = [],
+  ): Promise<T[]> {
+    return new Promise((resolve) => {
+      database.query(query, parameters, (error, result: T[]) => {
+        if (error) {
+          resolve([]);
+          console.error(query);
+          console.error(parameters);
+          throw error;
+        }
+        try {
+          resolve(result);
+        } catch (error) {
+          resolve([]);
+          console.error(query);
+          console.error(parameters);
+
+          throw error;
+        }
+      });
+    });
+  },
+
+  async fideData(name: string) {
+    const parameters = [name];
+    const nameFul = this.fulltextName(name);
+    let query = `SELECT
+      fideid,
+      name,
+      title,
+      rating,
+      rapid_rating,
+      blitz_rating,
+      birthday
+      FROM
+      fide_players
+      WHERE NAME LIKE ?`;
+    if (nameFul) {
+      parameters.push(nameFul);
+      query += ` AND MATCH(NAME) AGAINST(
+          ? IN BOOLEAN MODE
+      )`;
+    }
+    const result = await this.execSearch(query, parameters);
+    return result;
+  },
+
+  fulltextName(name: string) {
+    let nameFul = name.replaceAll(/['`-]/g, " ");
+    if (nameFul[0] == "'" || nameFul[0] == "`") {
+      nameFul = nameFul.slice(1);
+    }
+    nameFul = nameFul.replaceAll(/[^\d\sa-z]/gi, "");
+    nameFul = nameFul.replaceAll(/\b\w{1,2}\b/g, "");
+    nameFul = nameFul.replaceAll(/\s+/g, " ");
+    nameFul = nameFul.trim();
+    nameFul = nameFul
+      .split(" ")
+      .filter(Boolean)
+      .map((word) => "+" + word)
+      .join(" ");
+    return nameFul;
+  },
+
+  async getGame(id: number | string, base: string) {
+    const playersTable =
+      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
+
+    const table = base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
+    const query = `SELECT
+    ${table}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${
+      SETTINGS.sitesTable
+    }.site as Site, ${table}.Year, ${table}.Month, ${table}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo,${
+      SETTINGS.ecoTable
+    }.ECO as  ECO
+    FROM ${table}
+    inner join ${playersTable} as t1 on WhiteID = t1.id
+    inner join ${playersTable} as t2 on BlackID = t2.id
+    LEFT join ${SETTINGS.eventsTable} on ${table}.EventID = ${
+      SETTINGS.eventsTable
+    }.id
+    LEFT join ${SETTINGS.sitesTable} on ${table}.siteID = ${
+      SETTINGS.sitesTable
+    }.id
+    LEFT join ${SETTINGS.ecoTable} on ${table}.ecoID = ${SETTINGS.ecoTable}.id
+    WHERE ${table}.id = ${Number(id)}
+    `;
+    return await this.execSearch<Game>(query);
+  },
+
+  async minMaxYearEco(player: string, base: string = "all") {
+    let fulltextPlayer = player;
+    if (fulltextPlayer.split(" ").length > 1) {
+      fulltextPlayer = this.fulltextName(fulltextPlayer);
+    }
+    const parameters = [player];
+    let query = `
+SELECT max(WhiteElo) as maxElo, min(Year) as minYear, max(Year) as maxYear
+FROM ${base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable}
+inner join ${
+      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
+    } as t1 on WhiteID = t1.id
+WHERE t1.fullname like ?`;
+    if (fulltextPlayer) {
+      parameters.push(fulltextPlayer);
+      query += " AND MATCH(t1.fullname) against(? in boolean mode) ";
+    }
+    parameters.push(player);
+    query += `
+UNION
+SELECT max(BlackElo) as maxElo, min(Year) as minYear, max(Year) as maxYear
+FROM ${base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable}
+inner join ${
+      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
+    } as t1 on BlackID = t1.id
+WHERE t1.fullname like ?     `;
+    if (fulltextPlayer) {
+      parameters.push(fulltextPlayer);
+      query += " AND MATCH(t1.fullname) against(? in boolean mode) ";
+    }
+    return await this.execSearch<Limits>(query, parameters);
+  },
+
+  async playerOpeningStats(player: string) {
+    const whites = await this.playerOpeningStatsColor(player, "white");
+    const blacks = await this.playerOpeningStatsColor(player, "black");
+    const stats = {
+      blacks: blacks,
+      whites: whites,
+    };
+    return stats;
+  },
+
+  async playerOpeningStatsColor(player: string, color: string) {
+    let fulltextPlayer = player;
+    if (fulltextPlayer.split(" ").length > 1) {
+      fulltextPlayer = this.fulltextName(fulltextPlayer);
+    }
+    const parameters = [player];
+    let query = `SELECT opening,
+        COUNT(*) as count,
+        Round(SUM(substring_index(REPLACE(Result, '1/2','0.5'),'-',1))/COUNT(*) *100,2) as percent
+        FROM ${SETTINGS.allTable}
+        inner join ${SETTINGS.allPlayers} as t1 on ${
+      color == "white" ? "whiteID" : "BlackID"
+    } = t1.id
+        INNER JOIN ${SETTINGS.ecoTable}
+        on ${SETTINGS.allTable}.ecoID = ${SETTINGS.ecoTable}.id
+        WHERE  t1.fullname like ?
+        `;
+
+    if (fulltextPlayer) {
+      parameters.push(fulltextPlayer);
+      query += " AND MATCH(t1.fullname) against(? in boolean mode)";
+    }
+
+    query += ` GROUP BY opening
+        ORDER by COUNT(*) DESC, opening`;
+
+    return await this.execSearch(query, parameters);
+  },
+
+  async searchGames(object: SearchGameParameters) {
+    const searching = object.searching || "classic";
     let table;
     let white = "";
     let black = "";
-    const ignore = obj.ignore && obj.ignore.toLowerCase() === "true";
+    const ignore = object.ignore && object.ignore.toLowerCase() === "true";
     let event;
-    const minYear = Number(obj.minYear) || 1475;
-    const maxYear = Number(obj.maxYear) || new Date().getFullYear();
-    const minEco = obj.minEco || "A00";
-    const maxEco = obj.maxEco || "E99";
+    const minYear = Number(object.minYear) || 1475;
+    const maxYear = Number(object.maxYear) || new Date().getFullYear();
+    const minEco = object.minEco || "A00";
+    const maxEco = object.maxEco || "E99";
     let whiteLike;
     let blackLike;
 
-    if (obj.table) {
-      table = obj.table || "all";
+    if (object.table) {
+      table = object.table || "all";
     }
-    if (obj.white) {
-      white = obj.white;
+    if (object.white) {
+      white = object.white;
       whiteLike = white + "%";
     }
-    if (obj.black) {
-      black = obj.black;
+    if (object.black) {
+      black = object.black;
       blackLike = black + "%";
     }
-    if (obj.event) {
-      event = obj.event + "%";
+    if (object.event) {
+      event = object.event + "%";
     }
 
     const eventsTable = SETTINGS.eventsTable;
@@ -403,7 +322,7 @@ WHERE t1.fullname like ?     `;
     const ecoTable = SETTINGS.ecoTable;
 
     let query;
-    const params = [];
+    const parameters = [];
     if (searching == "classic") {
       if (whiteLike || blackLike) {
         query = `SELECT
@@ -418,30 +337,28 @@ WHERE t1.fullname like ?     `;
           WHERE `;
         if (whiteLike) {
           query += `whiteid in (SELECT id FROM ${playersTable} WHERE fullname LIKE ?) `;
-          params.push(whiteLike);
+          parameters.push(whiteLike);
         }
         if (blackLike) {
           if (whiteLike) {
             query += " AND ";
           }
           query += `blackid in (SELECT id FROM ${playersTable} WHERE fullname LIKE ?) `;
-          params.push(blackLike);
+          parameters.push(blackLike);
         }
         if (!(minYear == 1475 && maxYear == new Date().getFullYear())) {
           query += " and Year BETWEEN ? and ? ";
-          params.push(minYear);
-          params.push(maxYear);
+          parameters.push(minYear, maxYear);
         }
 
         if (event) {
           query += `and ${eventsTable}.name like ? `;
-          params.push(event);
+          parameters.push(event);
         }
 
         if (minEco != "A00" || maxEco != "E99") {
           query += `and ${ecoTable}.ECO BETWEEN ? AND ? `;
-          params.push(minEco);
-          params.push(maxEco);
+          parameters.push(minEco, maxEco);
         }
 
         if (ignore) {
@@ -458,30 +375,28 @@ WHERE t1.fullname like ?     `;
           WHERE `;
           if (whiteLike) {
             query += ` blackid in (SELECT id FROM ${playersTable} WHERE fullname LIKE ?) `;
-            params.push(whiteLike);
+            parameters.push(whiteLike);
           }
           if (blackLike) {
             if (whiteLike) {
               query += " AND ";
             }
             query += ` whiteid in (SELECT id FROM ${playersTable} WHERE fullname LIKE ?) `;
-            params.push(blackLike);
+            parameters.push(blackLike);
           }
           if (!(minYear == 1475 && maxYear == new Date().getFullYear())) {
             query += " and Year BETWEEN ? and ? ";
-            params.push(minYear);
-            params.push(maxYear);
+            parameters.push(minYear, maxYear);
           }
 
           if (event) {
             query += `and ${eventsTable}.name like ? `;
-            params.push(event);
+            parameters.push(event);
           }
 
           if (minEco != "A00" || maxEco != "E99") {
             query += `and ${ecoTable}.ECO BETWEEN ? AND ? `;
-            params.push(minEco);
-            params.push(maxEco);
+            parameters.push(minEco, maxEco);
           }
         }
       } else {
@@ -502,13 +417,13 @@ WHERE t1.fullname like ?     `;
         WHERE `;
         if (whiteLike) {
           query += ` whiteid = (SELECT id FROM ${playersTable} WHERE `;
-          white = this.fulltextName(obj.white);
+          white = this.fulltextName(object.white!);
           if (white) {
             query += " match(fullname) against(? in boolean mode) AND ";
-            params.push(white);
+            parameters.push(white);
           }
           query += " fullname like ? ) ";
-          params.push(obj.white);
+          parameters.push(object.white);
         }
 
         if (blackLike) {
@@ -516,30 +431,28 @@ WHERE t1.fullname like ?     `;
             query += " and ";
           }
           query += ` blackid = (SELECT id FROM ${playersTable} WHERE `;
-          black = this.fulltextName(obj.black);
+          black = this.fulltextName(object.black!);
           if (black) {
             query += "  match(fullname) against(? in boolean mode) AND  ";
-            params.push(black);
+            parameters.push(black);
           }
           query += "  fullname like ? ) ";
-          params.push(obj.black);
+          parameters.push(object.black);
         }
 
         if (!(minYear == 1475 && maxYear == new Date().getFullYear())) {
           query += " and Year BETWEEN ? and ? ";
-          params.push(minYear);
-          params.push(maxYear);
+          parameters.push(minYear, maxYear);
         }
 
         if (event) {
           query += `and ${eventsTable}.name like ? `;
-          params.push(event);
+          parameters.push(event);
         }
 
         if (minEco != "A00" || maxEco != "E99") {
           query += `and ${ecoTable}.ECO BETWEEN ? AND ? `;
-          params.push(minEco);
-          params.push(maxEco);
+          parameters.push(minEco, maxEco);
         }
 
         if (ignore) {
@@ -559,10 +472,10 @@ WHERE t1.fullname like ?     `;
             query += ` blackid = (SELECT id FROM ${playersTable} WHERE `;
             if (white) {
               query += " match(fullname) against(? in boolean mode) AND  ";
-              params.push(white);
+              parameters.push(white);
             }
             query += " fullname like ? ) ";
-            params.push(obj.white);
+            parameters.push(object.white);
           }
 
           if (blackLike) {
@@ -575,27 +488,25 @@ WHERE t1.fullname like ?     `;
             query += ` whiteid = (SELECT id FROM ${playersTable} WHERE `;
             if (black) {
               query += " match(fullname) against(? in boolean mode) AND ";
-              params.push(black);
+              parameters.push(black);
             }
             query += " fullname like ? ) ";
-            params.push(obj.black);
+            parameters.push(object.black);
           }
 
           if (!(minYear == 1475 && maxYear == new Date().getFullYear())) {
             query += " and Year BETWEEN ? and ? ";
-            params.push(minYear);
-            params.push(maxYear);
+            parameters.push(minYear, maxYear);
           }
 
           if (event) {
             query += `and ${eventsTable}.name like ? `;
-            params.push(event);
+            parameters.push(event);
           }
 
           if (minEco != "A00" || maxEco != "E99") {
             query += `and ${ecoTable}.ECO BETWEEN ? AND ? `;
-            params.push(minEco);
-            params.push(maxEco);
+            parameters.push(minEco, maxEco);
           }
         }
       } else {
@@ -610,7 +521,88 @@ WHERE t1.fullname like ?     `;
     query +=
       " order BY year DESC,month DESC,day DESC,Event,Round desc, White, Black limit 10000";
 
-    return this.execSearch<Game>(query, params);
+    return this.execSearch<Game>(query, parameters);
+  },
+  async searchPlayer(player: string, table: string, forFulltext = false) {
+    player += "%";
+
+    let query = `
+    SELECT
+    fullname
+    FROM ${
+      table == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
+    } WHERE fullname like ? `;
+
+    let result = await this.execSearch<Player>(query, [player]);
+    if (result.length === 0) {
+      query = `
+    SELECT
+    fullname
+    FROM ${SETTINGS.wholePlayers} WHERE fullname like ? `;
+
+      result = await this.execSearch<Player>(query, [player]);
+    }
+    if (forFulltext) {
+      for (const element of result) {
+        element.fullname = this.fulltextName(element.fullname.trim());
+      }
+    }
+    result = [...new Set(result)];
+
+    return result.map((a) => a.fullname);
+  },
+
+  async searchPlayerOpeningGame(
+    player: string,
+    color: null | string = null,
+    opening: null | string = null,
+  ) {
+    let query = `
+    SELECT
+        ${SETTINGS.allTable}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${SETTINGS.allTable}.Year, ${SETTINGS.allTable}.Month, ${SETTINGS.allTable}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${SETTINGS.ecoTable}.ECO
+        FROM ${SETTINGS.allTable}
+        inner join ${SETTINGS.allPlayers} as t1 on WhiteID = t1.id
+        inner join ${SETTINGS.allPlayers} as t2 on BlackID = t2.id
+        LEFT join ${SETTINGS.eventsTable} on ${SETTINGS.allTable}.EventID = ${SETTINGS.eventsTable}.id
+        LEFT join ${SETTINGS.sitesTable} on ${SETTINGS.allTable}.siteID = ${SETTINGS.sitesTable}.id
+        LEFT JOIN ${SETTINGS.ecoTable} on ${SETTINGS.allTable}.ecoID = ${SETTINGS.ecoTable}.ID
+`;
+    let fulltextPlayer = player;
+    if (fulltextPlayer.split(" ").length > 1) {
+      fulltextPlayer = this.fulltextName(fulltextPlayer);
+    }
+    const parameters = [player];
+    if (fulltextPlayer) {
+      parameters.push(fulltextPlayer);
+    }
+    if (color == "white") {
+      query += `
+        WHERE t1.fullname like ?
+`;
+      if (fulltextPlayer) {
+        query += " AND match(t1.fullname) against(? in boolean mode) ";
+      }
+      if (opening) {
+        query += " AND opening like ?";
+        parameters.push(opening);
+      }
+      query +=
+        "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black LIMIT 10000";
+    } else if (color == "black") {
+      query += `
+        WHERE t2.fullname like ?
+`;
+      if (fulltextPlayer) {
+        query += " AND match(t2.fullname) against(? in boolean mode) ";
+      }
+      if (opening) {
+        query += "AND opening like ?";
+        parameters.push(opening);
+      }
+      query +=
+        "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black LIMIT 10000";
+    }
+    return await this.execSearch<Game>(query, parameters);
   },
 };
 

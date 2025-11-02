@@ -1,15 +1,32 @@
 import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import eslintPluginN from "eslint-plugin-n";
-import eslintPluginImport from "eslint-plugin-import";
-import eslintPluginPromise from "eslint-plugin-promise";
-import eslintPluginSecurity from "eslint-plugin-security";
-import eslintPluginUnicorn from "eslint-plugin-unicorn";
-import eslintPluginSonar from "eslint-plugin-sonarjs";
+import pluginN from "eslint-plugin-n";
+import pluginImport from "eslint-plugin-import";
+import pluginPromise from "eslint-plugin-promise";
+import pluginSecurity from "eslint-plugin-security";
+import pluginUnicorn from "eslint-plugin-unicorn";
+import pluginSonar from "eslint-plugin-sonarjs";
+import perfectionist from "eslint-plugin-perfectionist";
+import * as regexpPlugin from "eslint-plugin-regexp";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
+  js.configs.recommended,
+  tseslint.configs.recommended,
+  tseslint.configs.recommendedTypeChecked,
+  tseslint.configs.strict,
+  pluginN.configs["flat/all"],
+  pluginImport.flatConfigs.recommended,
+  pluginImport.flatConfigs.errors,
+  pluginImport.flatConfigs.warnings,
+  pluginImport.flatConfigs.typescript,
+  pluginPromise.configs["flat/recommended"],
+  pluginSonar.configs.recommended,
+  pluginSecurity.configs.recommended,
+  pluginUnicorn.configs.recommended,
+  perfectionist.configs["recommended-alphabetical"],
+  regexpPlugin.configs["flat/recommended"],
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
     languageOptions: {
@@ -22,50 +39,58 @@ export default defineConfig([
         tsconfigRootDir: process.cwd(),
       },
     },
-    plugins: {
-      "@typescript-eslint": tseslint.plugin,
-      n: eslintPluginN,
-      import: eslintPluginImport,
-      promise: eslintPluginPromise,
-      security: eslintPluginSecurity,
-      unicorn: eslintPluginUnicorn,
-      sonarjs: eslintPluginSonar,
-    },
     rules: {
-      ...js.configs.recommended.rules,
-      ...tseslint.configs.recommended.rules,
-      ...tseslint.configs.recommendedTypeChecked.rules,
-      ...eslintPluginN.configs["recommended"].rules,
       "n/no-missing-import": "off",
       "n/no-unpublished-import": "off",
       "n/no-unsupported-features/es-syntax": "off",
       "import/order": [
-        "warn",
+        "error",
         {
           groups: [
-            ["builtin", "external"],
+            "builtin",
+            "external",
             "internal",
-            ["parent", "sibling", "index"],
+            "parent",
+            "sibling",
+            "index",
           ],
           "newlines-between": "always",
+
+          alphabetize: {
+            order: "asc",
+            caseInsensitive: true,
+          },
         },
       ],
       "import/no-unresolved": "off",
       "import/no-duplicates": "error",
+      "n/file-extension-in-import": "off",
+      "perfectionist/sort-imports": 0,
       "promise/catch-or-return": "warn",
       "promise/no-return-wrap": "error",
       "security/detect-object-injection": "off",
+      "unicorn/better-regex": "error",
       "unicorn/filename-case": ["error", { case: "kebabCase" }],
       "unicorn/prefer-query-selector": "error",
       "unicorn/prefer-node-protocol": "error",
       "unicorn/throw-new-error": "error",
       "unicorn/no-array-for-each": "warn",
+      "unicorn/no-null": "off",
+      "unicorn/number-literal-case": "off",
       "sonarjs/cognitive-complexity": ["warn", 200],
       "sonarjs/no-identical-functions": "warn",
       "sonarjs/no-nested-switch": "error",
       "sonarjs/no-small-switch": "warn",
+      "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/prefer-optional-chain": "error",
+      "@typescript-eslint/unified-signatures": "off",
       "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/no-unnecessary-type-arguments": "error",
+      "@typescript-eslint/prefer-nullish-coalescing": "off",
+      "@typescript-eslint/dot-notation": "error",
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/ban-ts-comment": [
         "error",
         { "ts-ignore": "allow-with-description" },
