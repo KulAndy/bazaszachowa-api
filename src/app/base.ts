@@ -285,6 +285,26 @@ WHERE t1.fullname like ?     `;
     return await this.execSearch(query, parameters);
   },
 
+  async polandTournaments(name: string) {
+    const parameters = [name];
+    const nameFul = this.fulltextName(name);
+    let query = `SELECT pt.id, pt.name, pt.start, pt.end, pt.url 
+FROM poland_tournaments as pt 
+INNER JOIN poland_tournament_players as ptp
+ON pt.id = ptp.tournament_id
+INNER JOIN players
+ON ptp.player_id = players.id
+WHERE fullname LIKE ?`;
+    if (nameFul) {
+      parameters.push(nameFul);
+      query += ` AND MATCH(fullname) AGAINST(
+          ? IN BOOLEAN MODE
+      )`;
+    }
+    query += " ORDER BY pt.start DESC, pt.end DESC";
+    const result = await this.execSearch(query, parameters);
+    return result;
+  },
   async searchGames(object: SearchGameParameters) {
     const searching = object.searching || "classic";
     let table;

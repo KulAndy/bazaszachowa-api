@@ -76,4 +76,13 @@ router.all("/openings/:player", async (request, response) => {
   }
 });
 
+router.all("/tournaments/poland/:player", async (request, response) => {
+  try {
+    const result = await BASE.polandTournaments(request.params.player);
+    response.send(result);
+  } catch {
+    response.status(400).send([]);
+  }
+});
+
 export default router;
