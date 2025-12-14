@@ -1,5 +1,5 @@
 import axios from "axios";
-import * as iconv from "iconv-lite";
+import iconv from "iconv-lite";
 
 interface PlayerDetails {
   fide_id: string;
@@ -36,7 +36,11 @@ const RESOURCES: Resources = {
 
       const pattern =
         /<tr><td[^\n\r>\u2028\u2029]*>.*<\/td>.*pers_id.*<td[^\n\r>\u2028\u2029]*>.*<\/td><\/tr>/gi;
-      const matches = body.match(pattern);
+      const matches: null | string[] = body.match(pattern);
+
+      if (!matches) {
+        return [];
+      }
 
       if (matches) {
         const dirt = /<\/?t[dr]>|<a [\w"&.=?]+>|<sup>.*<\/sup>|<\/a>/gi;
