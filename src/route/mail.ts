@@ -61,21 +61,21 @@ router.post("/send", (request, response) => {
 
     const transporter = nodemailer.createTransport({
       auth: {
-        pass: Settings.mailPassword,
-        user: Settings.mailUser,
+        pass: Settings.mail.password,
+        user: Settings.mail.user,
       },
-      host: Settings.mailServer,
-      port: Settings.mailPort.smtp.at(-1),
+      host: Settings.mail.server,
+      port: Settings.mail.port.smtp.at(-1),
       replyTo: email,
       secure: false,
     });
 
     const mailOptions: nodemailer.SendMailOptions = {
       attachments: [],
-      from: Settings.mailUser,
+      from: Settings.mail.user,
       subject,
       text: `${content}\n\n kontakt ${email}`,
-      to: Settings.adminContact,
+      to: Settings.admin.contact,
     };
 
     if (request.file) {

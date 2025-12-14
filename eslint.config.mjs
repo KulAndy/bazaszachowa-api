@@ -74,6 +74,7 @@ export default defineConfig([
       "unicorn/no-array-for-each": "warn",
       "unicorn/no-null": "off",
       "unicorn/number-literal-case": "off",
+      "unicorn/filename-case": "off",
       "sonarjs/cognitive-complexity": ["warn", 200],
       "sonarjs/no-identical-functions": "error",
       "sonarjs/no-nested-switch": "error",

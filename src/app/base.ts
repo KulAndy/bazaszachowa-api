@@ -1,15 +1,25 @@
+import mongoose from "mongoose";
 import mysql from "mysql";
 
 import SETTINGS from "../app/settings";
+import PolishTournament from "../model/PolishTournament";
 
 import type { EloData } from "./drawer";
 
 const database = mysql.createPool({
-  database: SETTINGS.base,
-  host: SETTINGS.host,
-  password: SETTINGS.password,
-  user: SETTINGS.user,
+  database: SETTINGS.mysql.base,
+  host: SETTINGS.mysql.host,
+  password: SETTINGS.mysql.password,
+  user: SETTINGS.mysql.user,
 });
+
+const MONGODB_URI = `mongodb://${encodeURIComponent(
+  SETTINGS.mongo.user,
+)}:${encodeURIComponent(SETTINGS.mongo.password)}@${
+  SETTINGS.mongo.host
+}:27017/${SETTINGS.mongo.database}`;
+
+void mongoose.connect(MONGODB_URI);
 
 interface Game {
   Black: null | string;
@@ -60,9 +70,11 @@ const BASE = {
     fulltextPlayer = this.fulltextName(fulltextPlayer);
 
     const gamesTable =
-      base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
+      base == "poland" ? SETTINGS.mysql.polandTable : SETTINGS.mysql.allTable;
     const playersTable =
-      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
+      base == "poland"
+        ? SETTINGS.mysql.polandPlayers
+        : SETTINGS.mysql.allPlayers;
 
     const query = `
                SELECT MAX(Elo) as Elo, Year, Month FROM(
@@ -105,7 +117,7 @@ const BASE = {
                          SELECT MAX(rating) as Elo,
                          Year(CURRENT_DATE()) as Year,
                          Month(CURRENT_DATE()) as Month
-                         FROM ${SETTINGS.fidePlayers}
+                         FROM ${SETTINGS.mysql.fidePlayers}
                          WHERE MATCH(name) AGAINST(? in boolean mode)
                ) as pom
                group by Year, Month
@@ -189,25 +201,32 @@ const BASE = {
 
   async getGame(id: number | string, base: string) {
     const playersTable =
-      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
+      base == "poland"
+        ? SETTINGS.mysql.polandPlayers
+        : SETTINGS.mysql.allPlayers;
 
-    const table = base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
+    const table =
+      base == "poland" ? SETTINGS.mysql.polandTable : SETTINGS.mysql.allTable;
     const query = `SELECT
-    ${table}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${
-      SETTINGS.sitesTable
+    ${table}.id, moves_blob as moves, ${
+      SETTINGS.mysql.eventsTable
+    }.name as Event, ${
+      SETTINGS.mysql.sitesTable
     }.site as Site, ${table}.Year, ${table}.Month, ${table}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo,${
-      SETTINGS.ecoTable
+      SETTINGS.mysql.ecoTable
     }.ECO as  ECO
     FROM ${table}
     inner join ${playersTable} as t1 on WhiteID = t1.id
     inner join ${playersTable} as t2 on BlackID = t2.id
-    LEFT join ${SETTINGS.eventsTable} on ${table}.EventID = ${
-      SETTINGS.eventsTable
+    LEFT join ${SETTINGS.mysql.eventsTable} on ${table}.EventID = ${
+      SETTINGS.mysql.eventsTable
     }.id
-    LEFT join ${SETTINGS.sitesTable} on ${table}.siteID = ${
-      SETTINGS.sitesTable
+    LEFT join ${SETTINGS.mysql.sitesTable} on ${table}.siteID = ${
+      SETTINGS.mysql.sitesTable
     }.id
-    LEFT join ${SETTINGS.ecoTable} on ${table}.ecoID = ${SETTINGS.ecoTable}.id
+    LEFT join ${SETTINGS.mysql.ecoTable} on ${table}.ecoID = ${
+      SETTINGS.mysql.ecoTable
+    }.id
     WHERE ${table}.id = ${Number(id)}
     `;
     return await this.execSearch<Game>(query);
@@ -221,9 +240,11 @@ const BASE = {
     const parameters = [player];
     let query = `
 SELECT max(WhiteElo) as maxElo, min(Year) as minYear, max(Year) as maxYear
-FROM ${base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable}
+FROM ${base == "poland" ? SETTINGS.mysql.polandTable : SETTINGS.mysql.allTable}
 inner join ${
-      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
+      base == "poland"
+        ? SETTINGS.mysql.polandPlayers
+        : SETTINGS.mysql.allPlayers
     } as t1 on WhiteID = t1.id
 WHERE t1.fullname like ?`;
     if (fulltextPlayer) {
@@ -234,9 +255,11 @@ WHERE t1.fullname like ?`;
     query += `
 UNION
 SELECT max(BlackElo) as maxElo, min(Year) as minYear, max(Year) as maxYear
-FROM ${base == "poland" ? SETTINGS.polandTable : SETTINGS.allTable}
+FROM ${base == "poland" ? SETTINGS.mysql.polandTable : SETTINGS.mysql.allTable}
 inner join ${
-      base == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
+      base == "poland"
+        ? SETTINGS.mysql.polandPlayers
+        : SETTINGS.mysql.allPlayers
     } as t1 on BlackID = t1.id
 WHERE t1.fullname like ?     `;
     if (fulltextPlayer) {
@@ -265,12 +288,12 @@ WHERE t1.fullname like ?     `;
     let query = `SELECT opening,
         COUNT(*) as count,
         Round(SUM(substring_index(REPLACE(Result, '1/2','0.5'),'-',1))/COUNT(*) *100,2) as percent
-        FROM ${SETTINGS.allTable}
-        inner join ${SETTINGS.allPlayers} as t1 on ${
+        FROM ${SETTINGS.mysql.allTable}
+        inner join ${SETTINGS.mysql.allPlayers} as t1 on ${
       color == "white" ? "whiteID" : "BlackID"
     } = t1.id
-        INNER JOIN ${SETTINGS.ecoTable}
-        on ${SETTINGS.allTable}.ecoID = ${SETTINGS.ecoTable}.id
+        INNER JOIN ${SETTINGS.mysql.ecoTable}
+        on ${SETTINGS.mysql.allTable}.ecoID = ${SETTINGS.mysql.ecoTable}.id
         WHERE  t1.fullname like ?
         `;
 
@@ -288,22 +311,46 @@ WHERE t1.fullname like ?     `;
   async polandTournaments(name: string) {
     const parameters = [name];
     const nameFul = this.fulltextName(name);
-    let query = `SELECT pt.id, pt.name, pt.start, pt.end, pt.url 
-FROM poland_tournaments as pt 
-INNER JOIN poland_tournament_players as ptp
-ON pt.id = ptp.tournament_id
-INNER JOIN players
-ON ptp.player_id = players.id
-WHERE fullname LIKE ?`;
+    let query = "SELECT id FROM players WHERE fullname LIKE ?";
     if (nameFul) {
       parameters.push(nameFul);
-      query += ` AND MATCH(fullname) AGAINST(
-          ? IN BOOLEAN MODE
-      )`;
+      query += " AND MATCH(fullname) AGAINST(? IN BOOLEAN MODE)";
     }
-    query += " ORDER BY pt.start DESC, pt.end DESC";
-    const result = await this.execSearch(query, parameters);
-    return result;
+    const players = await this.execSearch<{ id: number }>(query, parameters);
+    const playerIds = players.map((item) => item.id);
+
+    if (!mongoose.connection.readyState) {
+      await mongoose.connect(MONGODB_URI);
+    }
+
+    const result = await PolishTournament.find(
+      {
+        $or: playerIds.map((id) => ({ players: id })),
+      },
+      {
+        _id: 1,
+        end: 1,
+        name: 1,
+        players: 1,
+        start: 1,
+        url: 1,
+      },
+    )
+      // eslint-disable-next-line perfectionist/sort-objects, unicorn/no-array-sort
+      .sort({ start: -1, end: -1 })
+      .lean()
+      .exec();
+
+    const formattedResult = result.map((document) => ({
+      end: document.end,
+      id: document._id,
+      name: document.name,
+      players: document.players,
+      start: document.start,
+      url: document.url,
+    }));
+
+    return formattedResult;
   },
   async searchGames(object: SearchGameParameters) {
     const searching = object.searching || "classic";
@@ -334,25 +381,27 @@ WHERE fullname LIKE ?`;
       event = object.event + "%";
     }
 
-    const eventsTable = SETTINGS.eventsTable;
+    const eventsTable = SETTINGS.mysql.eventsTable;
     const playersTable =
-      table == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers;
+      table == "poland"
+        ? SETTINGS.mysql.polandPlayers
+        : SETTINGS.mysql.allPlayers;
     const gamesTable =
-      table == "poland" ? SETTINGS.polandTable : SETTINGS.allTable;
-    const ecoTable = SETTINGS.ecoTable;
+      table == "poland" ? SETTINGS.mysql.polandTable : SETTINGS.mysql.allTable;
+    const ecoTable = SETTINGS.mysql.ecoTable;
 
     let query;
     const parameters = [];
     if (searching == "classic") {
       if (whiteLike || blackLike) {
         query = `SELECT
-          ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
+          ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.mysql.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
           Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO
           FROM ${gamesTable}
           inner join ${playersTable} as t1 on WhiteID = t1.id
           inner join ${playersTable} as t2 on BlackID = t2.id
           left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id
-          LEFT join ${SETTINGS.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.sitesTable}.id
+          LEFT join ${SETTINGS.mysql.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.mysql.sitesTable}.id
         left join ${ecoTable} on ${gamesTable}.ecoID = ${ecoTable}.id
           WHERE `;
         if (whiteLike) {
@@ -384,13 +433,13 @@ WHERE fullname LIKE ?`;
         if (ignore) {
           query += `UNION
           SELECT
-          ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
+          ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.mysql.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
           Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO
           FROM ${gamesTable}
           inner join ${playersTable} as t1 on WhiteID = t1.id
           inner join ${playersTable} as t2 on BlackID = t2.id
           left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id
-          LEFT join ${SETTINGS.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.sitesTable}.id
+          LEFT join ${SETTINGS.mysql.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.mysql.sitesTable}.id
         left join ${ecoTable} on ${gamesTable}.ecoID = ${ecoTable}.id
           WHERE `;
           if (whiteLike) {
@@ -426,13 +475,13 @@ WHERE fullname LIKE ?`;
     } else if (searching == "fulltext") {
       if (white || black) {
         query = `SELECT
-        ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
+        ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.mysql.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
         Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO
         FROM ${gamesTable}
         inner join ${playersTable} as t1 on WhiteID = t1.id
         inner join ${playersTable} as t2 on BlackID = t2.id
         left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id
-        LEFT join ${SETTINGS.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.sitesTable}.id
+        LEFT join ${SETTINGS.mysql.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.mysql.sitesTable}.id
       left join ${ecoTable} on ${gamesTable}.ecoID = ${ecoTable}.id
         WHERE `;
         if (whiteLike) {
@@ -478,13 +527,13 @@ WHERE fullname LIKE ?`;
         if (ignore) {
           query += `UNION
           SELECT
-          ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
+          ${gamesTable}.id, moves_blob as moves, ${eventsTable}.name as Event, ${SETTINGS.mysql.sitesTable}.site as Site, ${gamesTable}.Year, ${gamesTable}.Month, ${gamesTable}.Day,
           Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${ecoTable}.ECO as ECO
           FROM ${gamesTable}
           inner join ${playersTable} as t1 on WhiteID = t1.id
           inner join ${playersTable} as t2 on BlackID = t2.id
           left join ${eventsTable} on ${gamesTable}.EventID = ${eventsTable}.id
-          LEFT join ${SETTINGS.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.sitesTable}.id
+          LEFT join ${SETTINGS.mysql.sitesTable} on ${gamesTable}.siteID = ${SETTINGS.mysql.sitesTable}.id
         left join ${ecoTable} on ${gamesTable}.ecoID = ${ecoTable}.id
           WHERE `;
 
@@ -550,7 +599,9 @@ WHERE fullname LIKE ?`;
     SELECT
     fullname
     FROM ${
-      table == "poland" ? SETTINGS.polandPlayers : SETTINGS.allPlayers
+      table == "poland"
+        ? SETTINGS.mysql.polandPlayers
+        : SETTINGS.mysql.allPlayers
     } WHERE fullname like ? `;
 
     let result = await this.execSearch<Player>(query, [player]);
@@ -558,7 +609,7 @@ WHERE fullname LIKE ?`;
       query = `
     SELECT
     fullname
-    FROM ${SETTINGS.wholePlayers} WHERE fullname like ? `;
+    FROM ${SETTINGS.mysql.wholePlayers} WHERE fullname like ? `;
 
       result = await this.execSearch<Player>(query, [player]);
     }
@@ -579,13 +630,15 @@ WHERE fullname LIKE ?`;
   ) {
     let query = `
     SELECT
-        ${SETTINGS.allTable}.id, moves_blob as moves, ${SETTINGS.eventsTable}.name as Event, ${SETTINGS.sitesTable}.site as Site, ${SETTINGS.allTable}.Year, ${SETTINGS.allTable}.Month, ${SETTINGS.allTable}.Day,  Round, t1.fullname as White, t2.fullname as Black,  Result, WhiteElo, BlackElo, ${SETTINGS.ecoTable}.ECO
-        FROM ${SETTINGS.allTable}
-        inner join ${SETTINGS.allPlayers} as t1 on WhiteID = t1.id
-        inner join ${SETTINGS.allPlayers} as t2 on BlackID = t2.id
-        LEFT join ${SETTINGS.eventsTable} on ${SETTINGS.allTable}.EventID = ${SETTINGS.eventsTable}.id
-        LEFT join ${SETTINGS.sitesTable} on ${SETTINGS.allTable}.siteID = ${SETTINGS.sitesTable}.id
-        LEFT JOIN ${SETTINGS.ecoTable} on ${SETTINGS.allTable}.ecoID = ${SETTINGS.ecoTable}.ID
+        ${SETTINGS.mysql.allTable}.id, moves_blob as moves, ${SETTINGS.mysql.eventsTable}.name as Event, ${SETTINGS.mysql.sitesTable}.site as Site, 
+        ${SETTINGS.mysql.allTable}.Year, ${SETTINGS.mysql.allTable}.Month, ${SETTINGS.mysql.allTable}.Day,  Round, t1.fullname as White, t2.fullname as Black,  
+        Result, WhiteElo, BlackElo, ${SETTINGS.mysql.ecoTable}.ECO
+        FROM ${SETTINGS.mysql.allTable}
+        inner join ${SETTINGS.mysql.allPlayers} as t1 on WhiteID = t1.id
+        inner join ${SETTINGS.mysql.allPlayers} as t2 on BlackID = t2.id
+        LEFT join ${SETTINGS.mysql.eventsTable} on ${SETTINGS.mysql.allTable}.EventID = ${SETTINGS.mysql.eventsTable}.id
+        LEFT join ${SETTINGS.mysql.sitesTable} on ${SETTINGS.mysql.allTable}.siteID = ${SETTINGS.mysql.sitesTable}.id
+        LEFT JOIN ${SETTINGS.mysql.ecoTable} on ${SETTINGS.mysql.allTable}.ecoID = ${SETTINGS.mysql.ecoTable}.ID
 `;
     let fulltextPlayer = player;
     if (fulltextPlayer.split(" ").length > 1) {

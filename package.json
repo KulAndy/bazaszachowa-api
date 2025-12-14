@@ -12,6 +12,7 @@
   "author": "Andrzej Kulesza",
   "license": "AGPLv3",
   "dependencies": {
+    "@types/mongoose": "^5.11.96",
     "axios": "^1.13.1",
     "body-parser": "^2.2.0",
     "canvas": "^3.2.0",
@@ -23,6 +24,7 @@
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
     "iconv-lite": "^0.7.0",
+    "mongoose": "^9.0.1",
     "multer": "^2.0.2",
     "mysql": "^2.18.1",
     "node-cron": "^4.2.1",
