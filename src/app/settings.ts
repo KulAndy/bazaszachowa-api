@@ -17,6 +17,7 @@ export default {
   },
   mongo: {
     database: "",
+    fideCollection: "",
     host: "",
     password: "",
     polandCollection: "",

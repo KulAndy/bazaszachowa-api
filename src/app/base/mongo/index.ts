@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import SETTINGS from "../../../app/settings";
 import MYSQL_BASE from "../mysql";
 
+import FideTournament from "./model/FideTournament";
 import PolishTournament from "./model/PolishTournament";
 
 const MONGODB_URI = `mongodb://${encodeURIComponent(
@@ -61,7 +62,44 @@ const polandTournaments = async (name: string) => {
   return formattedResult;
 };
 
+const fideTournaments = async (name: string) => {
+  const players = await MYSQL_BASE.fideData(name);
+  const playerIds = players.map((item) => item.fideid);
+
+  if (!mongoose.connection.readyState) {
+    await mongoose.connect(MONGODB_URI);
+  }
+
+  const result = await FideTournament.find(
+    {
+      $or: playerIds.map((id) => ({ players: id })),
+    },
+    {
+      _id: 1,
+      country: 1,
+      name: 1,
+      players: 1,
+      start: 1,
+    },
+  )
+    // eslint-disable-next-line perfectionist/sort-objects, unicorn/no-array-sort
+    .sort({ start: -1, end: -1 })
+    .lean()
+    .exec();
+
+  const formattedResult = result.map((document) => ({
+    country: document.country,
+    id: document._id,
+    name: document.name,
+    players: document.players,
+    start: document.start,
+  }));
+
+  return formattedResult;
+};
+
 const MONGO_DB = {
+  fideTournaments,
   polandTournaments,
 };
 

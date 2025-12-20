@@ -21,7 +21,15 @@ const fideData = async (name: string) => {
           ? IN BOOLEAN MODE
       )`;
   }
-  const result = await execSearch(query, parameters);
+  const result = await execSearch<{
+    birthday: string;
+    blitz_rating: number;
+    fideid: number;
+    name: string;
+    rapid_rating: number;
+    rating: number;
+    title: string;
+  }>(query, parameters);
   return result;
 };
 

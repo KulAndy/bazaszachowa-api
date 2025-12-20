@@ -85,4 +85,13 @@ router.all("/tournaments/poland/:player", async (request, response) => {
   }
 });
 
+router.all("/tournaments/fide/:player", async (request, response) => {
+  try {
+    const result = await BASE.fideTournaments(request.params.player);
+    response.send(result);
+  } catch {
+    response.status(400).send([]);
+  }
+});
+
 export default router;
