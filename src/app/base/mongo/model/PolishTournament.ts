@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-import settings from "../app/settings";
+import settings from "../../../../app/settings";
 
 interface PolishTournament extends Omit<Document, "_id"> {
   _id: number;
