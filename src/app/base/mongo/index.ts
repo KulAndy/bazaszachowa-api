@@ -17,7 +17,7 @@ void mongoose.connect(MONGODB_URI);
 const polandTournaments = async (name: string) => {
   const parameters = [name];
   const nameFul = MYSQL_BASE.fulltextName(name);
-  let query = "SELECT id FROM players WHERE fullname LIKE ?";
+  let query = `SELECT id FROM ${SETTINGS.mysql.wholePlayers} WHERE fullname LIKE ?`;
   if (nameFul) {
     parameters.push(nameFul);
     query += " AND MATCH(fullname) AGAINST(? IN BOOLEAN MODE)";

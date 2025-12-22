@@ -58,7 +58,7 @@ const eloHistory = async (player: string, base = "all") => {
                          Year(CURRENT_DATE()) as Year,
                          Month(CURRENT_DATE()) as Month
                          FROM ${SETTINGS.mysql.fidePlayers}
-                         WHERE MATCH(name) AGAINST(? in boolean mode)
+                         WHERE name LIKE ?
                ) as pom
                group by Year, Month
                        ORDER by Year, Month
@@ -69,7 +69,7 @@ const eloHistory = async (player: string, base = "all") => {
     player,
     fulltextPlayer,
     player,
-    fulltextPlayer,
+    player,
   ]);
 };
 
