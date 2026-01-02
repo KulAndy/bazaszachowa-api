@@ -8,6 +8,7 @@ const searchGames = async (object: SearchGameParameters) => {
   let table;
   let white = "";
   let black = "";
+  // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
   const ignore = object.ignore && object.ignore.toLowerCase() === "true";
   let event;
   const minYear = Number(object.minYear) || 1475;
