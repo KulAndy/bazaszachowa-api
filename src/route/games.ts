@@ -30,7 +30,12 @@ router.all(
   ["/opening/:player/:color", "/opening/:player/:color/:opening"],
   async (request, response) => {
     const { color, opening = null, player } = request.params;
-    if (!["black", "white"].includes(color) || typeof color !== "string") {
+    if (
+      typeof color !== "string" ||
+      typeof player !== "string" ||
+      (typeof opening !== "string" && opening !== null) ||
+      !["black", "white"].includes(color)
+    ) {
       return response.status(400).send([]);
     }
 
