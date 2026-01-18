@@ -23,9 +23,9 @@
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
     "iconv-lite": "^0.7.2",
-    "mongoose": "^9.1.2",
+    "mongoose": "^9.1.4",
     "multer": "^2.0.2",
-    "mysql2": "^3.16.0",
+    "mysql2": "^3.16.1",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.12"
   },
@@ -37,12 +37,12 @@
     "@types/hpp": "^0.2.7",
     "@types/multer": "^2.0.0",
     "@types/mysql": "^2.15.27",
-    "@types/node": "^25.0.6",
+    "@types/node": "^25.0.9",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^7.0.5",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-n": "^17.23.1",
+    "eslint-plugin-n": "^17.23.2",
     "eslint-plugin-perfectionist": "^5.3.1",
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-regexp": "^2.10.0",
@@ -51,6 +51,6 @@
     "eslint-plugin-unicorn": "^62.0.0",
     "globals": "^17.0.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.52.0"
+    "typescript-eslint": "^8.53.0"
   }
 }
