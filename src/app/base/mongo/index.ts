@@ -45,7 +45,7 @@ const polandTournaments = async (name: string) => {
       url: 1,
     },
   )
-    // eslint-disable-next-line perfectionist/sort-objects, unicorn/no-array-sort
+    // eslint-disable-next-line perfectionist/sort-objects
     .sort({ start: -1, end: -1 })
     .lean()
     .exec();
@@ -82,7 +82,7 @@ const fideTournaments = async (name: string) => {
       start: 1,
     },
   )
-    // eslint-disable-next-line perfectionist/sort-objects, unicorn/no-array-sort
+    // eslint-disable-next-line perfectionist/sort-objects
     .sort({ start: -1, end: -1 })
     .lean()
     .exec();

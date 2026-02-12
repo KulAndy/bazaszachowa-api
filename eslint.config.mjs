@@ -1,5 +1,4 @@
 import { defineConfig } from "eslint/config";
-import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import pluginN from "eslint-plugin-n";
@@ -12,7 +11,6 @@ import perfectionist from "eslint-plugin-perfectionist";
 import * as regexpPlugin from "eslint-plugin-regexp";
 
 export default defineConfig([
-  js.configs.recommended,
   tseslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
   tseslint.configs.strict,
