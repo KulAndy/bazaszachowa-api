@@ -13,16 +13,21 @@ type FileMetaData = {
   webViewLink: string;
 };
 
-const getFilesInFolder = async (folderId: string): Promise<FileMetaData[]> => {
-  const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,modifiedTime,webViewLink,size,description)&key=${SETTINGS.key}`;
+const getFilesInFolder = async (
+  token: string,
+  folderId: string,
+): Promise<FileMetaData[]> => {
+  const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,modifiedTime,webViewLink,size,description)&key=${token}`;
   const response = await axios.get<{ files: FileMetaData[] }>(url);
   return response.data.files;
 };
 
 router.get("/dumps", async (_request, response) => {
   try {
-    const folderId = "1fEbetzoz0CgZGDcEj7HVkXAdtWB5ci_U";
-    const files = await getFilesInFolder(folderId);
+    const files = await getFilesInFolder(
+      SETTINGS.google.token,
+      SETTINGS.google.baseFolderId,
+    );
 
     response.json(files);
   } catch (error) {

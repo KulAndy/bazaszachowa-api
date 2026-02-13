@@ -4,7 +4,10 @@ export default {
     contact: "",
     name: "",
   },
-  key: "",
+  google: {
+    baseFolderId: "",
+    token: "",
+  },
   mail: {
     password: "",
     port: {

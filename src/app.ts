@@ -68,7 +68,6 @@ cron.schedule("0 0 * * *", () => {
     });
 });
 
-// ===== Start Server =====
 app.listen(port, () => {
   console.info(`Server is listening on port ${port}`);
 });

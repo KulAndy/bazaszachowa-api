@@ -73,6 +73,7 @@ router.post("/send", (request, response) => {
     const mailOptions: nodemailer.SendMailOptions = {
       attachments: [],
       from: Settings.mail.user,
+      replyTo: email,
       subject,
       text: `${content}\n\n kontakt ${email}`,
       to: Settings.admin.contact,
