@@ -1,6 +1,9 @@
+import RESOURCES from "../../../resources";
 import SETTINGS from "../../../settings";
 import execSearch from "../execSearch";
 import fulltextName from "../tools/fulltextName";
+
+import fideData from "./fideData";
 
 interface Player {
   fullname: string;
@@ -37,6 +40,15 @@ const searchPlayer = async (
     }
   }
   result = [...new Set(result)];
+
+  if (result.length === 0) {
+    const response = await RESOURCES.crData(player);
+    result = response.map((item) => ({ fullname: item.name }));
+  }
+  if (result.length === 0) {
+    const response = await fideData(player);
+    result = response.map((item) => ({ fullname: item.name }));
+  }
 
   return result.map((a) => a.fullname);
 };
