@@ -1,6 +1,6 @@
 {
   "name": "bazaszachowa-api",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "api of online chess database",
   "main": "app.js",
   "scripts": {
