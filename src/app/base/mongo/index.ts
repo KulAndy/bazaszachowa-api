@@ -27,6 +27,9 @@ const polandTournaments = async (name: string) => {
     parameters,
   );
   const playerIds = players.map((item) => item.id);
+  if (playerIds.length === 0) {
+    return [];
+  }
 
   if (!mongoose.connection.readyState) {
     await mongoose.connect(MONGODB_URI);
@@ -65,6 +68,9 @@ const polandTournaments = async (name: string) => {
 const fideTournaments = async (name: string) => {
   const players = await MYSQL_BASE.fideData(name);
   const playerIds = players.map((item) => item.fideid);
+  if (playerIds.length === 0) {
+    return [];
+  }
 
   if (!mongoose.connection.readyState) {
     await mongoose.connect(MONGODB_URI);
