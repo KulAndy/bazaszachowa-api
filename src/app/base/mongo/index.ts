@@ -88,8 +88,7 @@ const fideTournaments = async (name: string) => {
       start: 1,
     },
   )
-    // eslint-disable-next-line perfectionist/sort-objects
-    .sort({ start: -1, end: -1 })
+    .sort({ start: -1 })
     .lean()
     .exec();
 
