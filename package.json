@@ -12,7 +12,7 @@
   "author": "Andrzej Kulesza",
   "license": "AGPLv3",
   "dependencies": {
-    "axios": "^1.13.5",
+    "axios": "^1.13.6",
     "body-parser": "^2.2.2",
     "canvas": "^3.2.1",
     "compression": "^1.8.1",
@@ -23,9 +23,9 @@
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
     "iconv-lite": "^0.7.2",
-    "mongoose": "^9.2.1",
-    "multer": "^2.0.2",
-    "mysql2": "^3.17.4",
+    "mongoose": "^9.2.3",
+    "multer": "^2.1.0",
+    "mysql2": "^3.18.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1"
   },
@@ -35,7 +35,7 @@
     "@types/express": "^5.0.6",
     "@types/hpp": "^0.2.7",
     "@types/multer": "^2.0.0",
-    "@types/node": "^25.3.0",
+    "@types/node": "^25.3.3",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^7.0.11",
     "eslint": "^9.39.2",
@@ -49,6 +49,6 @@
     "eslint-plugin-unicorn": "^63.0.0",
     "globals": "^17.3.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.0"
+    "typescript-eslint": "^8.56.1"
   }
 }
