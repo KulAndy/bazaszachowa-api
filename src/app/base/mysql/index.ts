@@ -4,7 +4,7 @@ import searchGames from "./game/searchGames";
 import searchPlayerOpeningGame from "./game/searchPlayerOpeningGame";
 import eloHistory from "./player/eloHistory";
 import fideData from "./player/fideData";
-import minMaxYearEco from "./player/minMaxYearEco";
+import minMaxYearElo from "./player/minMaxYearElo";
 import playerOpeningStats from "./player/playerOpeningStats";
 import searchPlayer from "./player/searchPlayer";
 import fulltextName from "./tools/fulltextName";
@@ -50,7 +50,7 @@ const MYSQL_BASE = {
   fideData,
   fulltextName,
   getGame,
-  minMaxYearEco,
+  minMaxYearElo,
   playerOpeningStats,
   searchGames,
   searchPlayer,

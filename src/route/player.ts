@@ -60,7 +60,7 @@ router.all("/plot/:format/:player", async (request, response) => {
 
 router.all("/limit/:player", async (request, response) => {
   try {
-    const result = await BASE.minMaxYearEco(request.params.player);
+    const result = await BASE.minMaxYearElo(request.params.player);
     response.send(result);
   } catch {
     response.status(400).send([{ maxElo: null, maxYear: null, minYear: null }]);
