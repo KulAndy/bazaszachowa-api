@@ -5,4 +5,4 @@
 należy uzupełnic plik app/settings.js 
 * dane MySQL
 * dane poczty
-* klucz (token) google'a do google drive'a (wtedy trzeba też w app.js zmienić linki do plików)
+* klucz (token) google'a do google drive'a + id katalogu z plikami
