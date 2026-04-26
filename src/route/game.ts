@@ -1,43 +1,65 @@
-import express from "express";
+import type { FastifyPluginCallback } from "fastify";
 
-const router = express.Router();
 import BASE from "../app/base";
 import CHESS from "../app/chess";
 
-router.all("/:base/:id", async (request, response) => {
-  const { base, id } = request.params;
-  if (!base || !id) {
-    return response.status(400);
-  }
+type Parameters_ = {
+  base: string;
+  id: string;
+};
 
-  try {
-    const result = await BASE.getGame(id, base);
-    const parsed = result.map((item) => ({
-      ...item,
-      moves: CHESS.movesBin2obj(item.moves),
-    }));
-    response.json(parsed);
-  } catch (error) {
-    console.error(error);
-    response.status(400).send([
-      {
-        Black: "N, N",
-        BlackElo: null,
-        Day: null,
-        ECO: null,
-        Event: null,
-        id: 12_347_922,
-        Month: null,
-        moves: [],
-        Result: "0-1",
-        Round: null,
-        Site: null,
-        White: "N, N",
-        WhiteElo: null,
-        Year: null,
+const fallback = [
+  {
+    Black: "N, N",
+    BlackElo: null,
+    Day: null,
+    ECO: null,
+    Event: null,
+    id: 0,
+    Month: null,
+    moves: [],
+    Result: "*",
+    Round: null,
+    Site: null,
+    White: "N, N",
+    WhiteElo: null,
+    Year: null,
+  },
+];
+
+const router: FastifyPluginCallback = (app) => {
+  app.all<{ Params: Parameters_ }>(
+    "/:base/:id",
+    {
+      schema: {
+        params: {
+          properties: {
+            base: { type: "string" },
+            id: { type: "string" },
+          },
+          required: ["base", "id"],
+          type: "object",
+        },
       },
-    ]);
-  }
-});
+    },
+    async (request, response) => {
+      const { base, id } = request.params;
+
+      try {
+        const result = await BASE.getGame(id, base);
+        const parsed = result.map((item) => ({
+          ...item,
+          moves: CHESS.movesBin2obj(item.moves),
+        }));
+
+        return response.send(parsed);
+      } catch (error) {
+        console.error("Failed to fetch game", error);
+
+        return response.code(400).send(fallback);
+      }
+    },
+  );
+};
 
 export default router;

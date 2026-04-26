@@ -1,97 +1,200 @@
-import express from "express";
+import type { FastifyPluginCallback } from "fastify";
 
-const router = express.Router();
 import BASE from "../app/base";
 import DRAWER from "../app/drawer";
 import RESOURCES from "../app/resources";
 
-router.all("/cr/:player", async (request, response) => {
-  const player = request.params.player;
-  if (!player) {
-    return response.status(400);
-  }
+type PlayerParameters = {
+  player: string;
+};
 
-  try {
-    const result = await RESOURCES.crData(player);
-    response.json(result);
-  } catch (error) {
-    console.error(error);
-    response.status(503).json([]);
-  }
-});
+type PlotParameters = {
+  format: "jpeg" | "svg";
+  player: string;
+};
 
-router.all("/fide/:player", async (request, response) => {
-  const player = request.params.player;
-  if (!player) {
-    return response.status(400);
-  }
+const router: FastifyPluginCallback = (app) => {
+  app.all<{ Params: PlayerParameters }>(
+    "/cr/:player",
+    {
+      schema: {
+        params: {
+          properties: {
+            player: { minLength: 1, type: "string" },
+          },
+          required: ["player"],
+          type: "object",
+        },
+      },
+    },
+    async (request, response) => {
+      const { player } = request.params;
 
-  try {
-    const result = await BASE.fideData(player);
-    response.json(result);
-  } catch (error) {
-    console.error(error);
-    response.status(503).json([]);
-  }
-});
+      try {
+        return await RESOURCES.crData(player);
+      } catch (error) {
+        console.error("crData failed", error);
+        return response.code(503).send([]);
+      }
+    },
+  );
 
-router.all("/plot/:format/:player", async (request, response) => {
-  const { format, player } = request.params;
-  if (!format || !player) {
-    return response.status(400).json(null);
-  }
+  app.all<{ Params: PlayerParameters }>(
+    "/fide/:player",
+    {
+      schema: {
+        params: {
+          properties: {
+            player: { minLength: 1, type: "string" },
+          },
+          required: ["player"],
+          type: "object",
+        },
+      },
+    },
+    async (request, response) => {
+      const { player } = request.params;
 
-  const elo_history = await BASE.eloHistory(player);
+      try {
+        return await BASE.fideData(player);
+      } catch (error) {
+        console.error("fideData failed", error);
+        return response.code(503).send([]);
+      }
+    },
+  );
 
-  try {
-    if (format === "jpeg") {
-      const result = await DRAWER.eloJPEG(elo_history, player);
-      response.setHeader("Content-Type", "image/jpeg").send(result);
-    } else if (format === "svg") {
-      const result = DRAWER.eloSVG(elo_history, player);
-      response.setHeader("Content-Type", "image/svg+xml").send(result);
-    } else {
-      response.status(400).json(null);
-    }
-  } catch {
-    response.status(404).json(null);
-  }
-});
+  app.all<{ Params: PlotParameters }>(
+    "/plot/:format/:player",
+    {
+      schema: {
+        params: {
+          properties: {
+            format: { enum: ["jpeg", "svg"] },
+            player: { minLength: 1, type: "string" },
+          },
+          required: ["format", "player"],
+          type: "object",
+        },
+      },
+    },
+    async (request, response) => {
+      const { format, player } = request.params;
 
-router.all("/limit/:player", async (request, response) => {
-  try {
-    const result = await BASE.minMaxYearElo(request.params.player);
-    response.send(result);
-  } catch {
-    response.status(400).send([{ maxElo: null, maxYear: null, minYear: null }]);
-  }
-});
+      try {
+        const elo_history = await BASE.eloHistory(player);
 
-router.all("/openings/:player", async (request, response) => {
-  try {
-    const result = await BASE.playerOpeningStats(request.params.player);
-    response.send(result);
-  } catch {
-    response.status(400).send([{ maxElo: null, maxYear: null, minYear: null }]);
-  }
-});
+        if (format === "jpeg") {
+          const result = await DRAWER.eloJPEG(elo_history, player);
 
-router.all("/tournaments/poland/:player", async (request, response) => {
-  try {
-    const result = await BASE.polandTournaments(request.params.player);
-    response.send(result);
-  } catch {
-    response.status(400).send([]);
-  }
-});
+          return response.type("image/jpeg").send(result);
+        }
 
-router.all("/tournaments/fide/:player", async (request, response) => {
-  try {
-    const result = await BASE.fideTournaments(request.params.player);
-    response.send(result);
-  } catch {
-    response.status(400).send([]);
-  }
-});
+        if (format === "svg") {
+          const result = DRAWER.eloSVG(elo_history, player);
+
+          return response.type("image/svg+xml").send(result);
+        }
+
+        return response.code(400).send(null);
+      } catch (error) {
+        console.error("plot failed", error);
+        return response.code(404).send(null);
+      }
+    },
+  );
+
+  app.all<{ Params: PlayerParameters }>(
+    "/limit/:player",
+    {
+      schema: {
+        params: {
+          properties: {
+            player: { minLength: 1, type: "string" },
+          },
+          required: ["player"],
+          type: "object",
+        },
+      },
+    },
+    async (request, response) => {
+      try {
+        return await BASE.minMaxYearElo(request.params.player);
+      } catch {
+        return response
+          .code(400)
+          .send([{ maxElo: null, maxYear: null, minYear: null }]);
+      }
+    },
+  );
+
+  app.all<{ Params: PlayerParameters }>(
+    "/openings/:player",
+    {
+      schema: {
+        params: {
+          properties: {
+            player: { minLength: 1, type: "string" },
+          },
+          required: ["player"],
+          type: "object",
+        },
+      },
+    },
+    async (request, response) => {
+      try {
+        return await BASE.playerOpeningStats(request.params.player);
+      } catch {
+        return response
+          .code(400)
+          .send([{ maxElo: null, maxYear: null, minYear: null }]);
+      }
+    },
+  );
+
+  app.all<{ Params: PlayerParameters }>(
+    "/tournaments/poland/:player",
+    {
+      schema: {
+        params: {
+          properties: {
+            player: { minLength: 1, type: "string" },
+          },
+          required: ["player"],
+          type: "object",
+        },
+      },
+    },
+    async (request, response) => {
+      try {
+        return await BASE.polandTournaments(request.params.player);
+      } catch {
+        return response.code(400).send([]);
+      }
+    },
+  );
+
+  app.all<{ Params: PlayerParameters }>(
+    "/tournaments/fide/:player",
+    {
+      schema: {
+        params: {
+          properties: {
+            player: { minLength: 1, type: "string" },
+          },
+          required: ["player"],
+          type: "object",
+        },
+      },
+    },
+    async (request, response) => {
+      try {
+        return await BASE.fideTournaments(request.params.player);
+      } catch {
+        return response.code(400).send([]);
+      }
+    },
+  );
+};
 
 export default router;

@@ -1,9 +1,7 @@
 import axios from "axios";
-import express from "express";
+import type { FastifyPluginCallback } from "fastify";
 
 import SETTINGS from "../app/settings";
-
-const router = express.Router();
 
 type FileMetaData = {
   description?: string;
@@ -22,18 +20,23 @@ const getFilesInFolder = async (
   return response.data.files;
 };
 
-router.get("/dumps", async (_request, response) => {
-  try {
-    const files = await getFilesInFolder(
-      SETTINGS.google.token,
-      SETTINGS.google.baseFolderId,
-    );
+const router: FastifyPluginCallback = (app) => {
+  app.all("/dumps", async (_request, response) => {
+    try {
+      const files = await getFilesInFolder(
+        SETTINGS.google.token,
+        SETTINGS.google.baseFolderId,
+      );
 
-    response.json(files);
-  } catch (error) {
-    console.error("Error:", error);
-    response.status(500).send("Internal Server Error");
-  }
-});
+      return response.send(files);
+    } catch (error) {
+      console.error("Google Drive fetch failed", error);
+
+      return response.code(500).send({
+        message: "Internal Server Error",
+      });
+    }
+  });
+};
 
 export default router;

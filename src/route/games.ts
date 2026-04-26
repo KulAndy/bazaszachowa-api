@@ -1,56 +1,89 @@
-import express from "express";
+import type { FastifyPluginCallback } from "fastify";
 
-const router = express.Router();
 import BASE from "../app/base";
 import CHESS from "../app/chess";
 
-router.all("/", async (request, response) => {
-  const parameters =
-    request.method === "GET"
-      ? request.query
-      : (request.body as Record<string, string>);
-  if (!parameters.white && !parameters.black) {
-    return response.status(400).send([]);
-  }
+type OpeningParameters = {
+  color: "black" | "white";
+  opening?: string;
+  player: string;
+};
 
-  try {
-    const result = await BASE.searchGames(parameters);
-    const parsed = result.map((item) => ({
-      ...item,
-      moves: CHESS.movesBin2obj(item.moves),
-    }));
-    response.json({ rows: parsed, table: parameters.table || "all" });
-  } catch (error) {
-    console.error(error);
-    response.status(503).json([]);
-  }
-});
+type SearchParameters = Record<string, string>;
 
-router.all(
-  ["/opening/:player/:color", "/opening/:player/:color/:opening"],
-  async (request, response) => {
-    const { color, opening = null, player } = request.params;
-    if (
-      typeof color !== "string" ||
-      typeof player !== "string" ||
-      (typeof opening !== "string" && opening !== null) ||
-      !["black", "white"].includes(color)
-    ) {
-      return response.status(400).send([]);
-    }
+const router: FastifyPluginCallback = (app) => {
+  app.route<{
+    Body: SearchParameters;
+    Querystring: SearchParameters;
+  }>({
+    handler: async (request, response) => {
+      const parameters =
+        request.method === "GET" ? request.query : request.body;
 
-    try {
-      const result = await BASE.searchPlayerOpeningGame(player, color, opening);
-      const parsed = result.map((item) => ({
-        ...item,
-        moves: CHESS.movesBin2obj(item.moves),
-      }));
-      response.json(parsed);
-    } catch (error) {
-      console.error(error);
-      response.status(503).json([]);
-    }
-  },
-);
+      if (!parameters.white && !parameters.black) {
+        return response.code(400).send([]);
+      }
+
+      try {
+        const result = await BASE.searchGames(parameters);
+        const parsed = result.map((item) => ({
+          ...item,
+          moves: CHESS.movesBin2obj(item.moves),
+        }));
+
+        return {
+          rows: parsed,
+          table: parameters.table || "all",
+        };
+      } catch (error) {
+        console.error("searchGames failed", error);
+
+        return response.code(503).send([]);
+      }
+    },
+    method: ["GET", "POST"],
+    url: "/",
+  });
+
+  app.all<{
+    Params: OpeningParameters;
+  }>(
+    "/opening/:player/:color/:opening?",
+    {
+      schema: {
+        params: {
+          properties: {
+            color: { enum: ["black", "white"] },
+            opening: { type: "string" },
+            player: { type: "string" },
+          },
+          required: ["player", "color"],
+          type: "object",
+        },
+      },
+    },
+    async (request, response) => {
+      const { color, opening = null, player } = request.params;
+
+      try {
+        const result = await BASE.searchPlayerOpeningGame(
+          player,
+          color,
+          opening,
+        );
+        const parsed = result.map((item) => ({
+          ...item,
+          moves: CHESS.movesBin2obj(item.moves),
+        }));
+
+        return parsed;
+      } catch (error) {
+        console.error("searchPlayerOpeningGame failed", error);
+
+        return response.code(503).send([]);
+      }
+    },
+  );
+};
 
 export default router;
