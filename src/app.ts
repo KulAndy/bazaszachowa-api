@@ -69,7 +69,7 @@ cron.schedule("0 0 * * *", async () => {
   }
 });
 
-app.listen({ port }, (error, address) => {
+app.listen({ host: "0.0.0.0", port }, (error, address) => {
   if (error) {
     console.error("Error starting server", error);
     throw error;
