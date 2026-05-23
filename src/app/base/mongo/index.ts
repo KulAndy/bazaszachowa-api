@@ -22,10 +22,7 @@ const polandTournaments = async (name: string) => {
     parameters.push(nameFul);
     query += " AND MATCH(fullname) AGAINST(? IN BOOLEAN MODE)";
   }
-  const players = await MYSQL_BASE.execSearch<{ id: number }>(
-    query,
-    parameters,
-  );
+  const players = await MYSQL_BASE.execQuery<{ id: number }>(query, parameters);
   const playerIds = players.map((item) => item.id);
   if (playerIds.length === 0) {
     return [];

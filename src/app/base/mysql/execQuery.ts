@@ -1,6 +1,6 @@
 import mysql, { QueryError } from "mysql2";
 
-import SETTINGS from "../../../app/settings";
+import SETTINGS from "../../settings";
 
 const database = mysql.createPool({
   database: SETTINGS.mysql.base,
@@ -9,11 +9,11 @@ const database = mysql.createPool({
   user: SETTINGS.mysql.user,
 });
 
-const execSearch = async <T extends object>(
+const execQuery = async <T extends object>(
   query: string,
   parameters: (number | string | undefined)[] = [],
 ): Promise<T[]> => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     database.query(
       query,
       parameters,
@@ -21,8 +21,7 @@ const execSearch = async <T extends object>(
         if (error) {
           console.error(query);
           console.error(parameters);
-          resolve([]);
-          throw error;
+          reject(error);
         }
 
         try {
@@ -30,12 +29,12 @@ const execSearch = async <T extends object>(
         } catch (error) {
           console.error(query);
           console.error(parameters);
-          resolve([]);
-          throw error;
+          // eslint-disable-next-line  @typescript-eslint/prefer-promise-reject-errors
+          reject(error);
         }
       },
     );
   });
 };
 
-export default execSearch;
+export default execQuery;

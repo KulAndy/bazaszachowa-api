@@ -38,6 +38,7 @@ export default {
     polandPlayers: "",
     polandTable: "",
     sitesTable: "",
+    uploadTable: "",
     user: "",
     wholePlayers: "",
   },

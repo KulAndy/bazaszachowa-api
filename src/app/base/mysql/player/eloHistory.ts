@@ -1,6 +1,6 @@
 import { EloData } from "../../../drawer";
 import SETTINGS from "../../../settings";
-import execSearch from "../execSearch";
+import execQuery from "../execQuery";
 import fulltextName from "../tools/fulltextName";
 
 const eloHistory = async (player: string, base = "all") => {
@@ -64,7 +64,7 @@ const eloHistory = async (player: string, base = "all") => {
                        ORDER by Year, Month
     `;
 
-  return await execSearch<EloData>(query, [
+  return await execQuery<EloData>(query, [
     fulltextPlayer,
     player,
     fulltextPlayer,

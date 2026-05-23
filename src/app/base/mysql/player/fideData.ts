@@ -1,5 +1,5 @@
 import SETTINGS from "../../../../app/settings";
-import execSearch from "../execSearch";
+import execQuery from "../execQuery";
 
 const fideData = async (name: string) => {
   const parameters = [name];
@@ -13,7 +13,7 @@ const fideData = async (name: string) => {
       birthday
       FROM ${SETTINGS.mysql.fidePlayers}
       WHERE NAME LIKE ?`;
-  const result = await execSearch<{
+  const result = await execQuery<{
     birthday: string;
     blitz_rating: number;
     fideid: number;

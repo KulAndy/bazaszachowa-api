@@ -1,6 +1,6 @@
 import { Limits } from "..";
 import SETTINGS from "../../../settings";
-import execSearch from "../execSearch";
+import execQuery from "../execQuery";
 import fulltextName from "../tools/fulltextName";
 
 const minMaxYearElo = async (player: string, base: string = "all") => {
@@ -36,7 +36,7 @@ WHERE t1.fullname like ?     `;
     query += " AND MATCH(t1.fullname) against(? in boolean mode) ";
   }
   query += "\n) as pom";
-  return await execSearch<Limits>(query, parameters);
+  return await execQuery<Limits>(query, parameters);
 };
 
 export default minMaxYearElo;

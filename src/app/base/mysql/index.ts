@@ -1,4 +1,4 @@
-import execSearch from "./execSearch";
+import execQuery from "./execQuery";
 import getGame from "./game/getGame";
 import searchGames from "./game/searchGames";
 import searchPlayerOpeningGame from "./game/searchPlayerOpeningGame";
@@ -46,7 +46,7 @@ export interface SearchGameParameters {
 
 const MYSQL_BASE = {
   eloHistory,
-  execSearch,
+  execQuery,
   fideData,
   fulltextName,
   getGame,

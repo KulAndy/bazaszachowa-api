@@ -1,6 +1,6 @@
 import RESOURCES from "../../../resources";
 import SETTINGS from "../../../settings";
-import execSearch from "../execSearch";
+import execQuery from "../execQuery";
 import fulltextName from "../tools/fulltextName";
 
 import fideData from "./fideData";
@@ -25,14 +25,14 @@ const searchPlayer = async (
         : SETTINGS.mysql.allPlayers
     } WHERE fullname like ? `;
 
-  let result = await execSearch<Player>(query, [player]);
+  let result = await execQuery<Player>(query, [player]);
   if (result.length === 0) {
     query = `
     SELECT
     fullname
     FROM ${SETTINGS.mysql.wholePlayers} WHERE fullname like ? `;
 
-    result = await execSearch<Player>(query, [player]);
+    result = await execQuery<Player>(query, [player]);
   }
   if (forFulltext) {
     for (const element of result) {

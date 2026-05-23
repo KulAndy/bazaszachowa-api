@@ -1,6 +1,6 @@
 import { Game } from "..";
 import SETTINGS from "../../../settings";
-import execSearch from "../execSearch";
+import execQuery from "../execQuery";
 import fulltextName from "../tools/fulltextName";
 
 const searchPlayerOpeningGame = async (
@@ -10,8 +10,8 @@ const searchPlayerOpeningGame = async (
 ) => {
   let query = `
     SELECT
-        ${SETTINGS.mysql.allTable}.id, moves_blob as moves, ${SETTINGS.mysql.eventsTable}.name as Event, ${SETTINGS.mysql.sitesTable}.site as Site, 
-        ${SETTINGS.mysql.allTable}.Year, ${SETTINGS.mysql.allTable}.Month, ${SETTINGS.mysql.allTable}.Day,  Round, t1.fullname as White, t2.fullname as Black,  
+        ${SETTINGS.mysql.allTable}.id, moves_blob as moves, ${SETTINGS.mysql.eventsTable}.name as Event, ${SETTINGS.mysql.sitesTable}.site as Site,
+        ${SETTINGS.mysql.allTable}.Year, ${SETTINGS.mysql.allTable}.Month, ${SETTINGS.mysql.allTable}.Day,  Round, t1.fullname as White, t2.fullname as Black,
         Result, WhiteElo, BlackElo, ${SETTINGS.mysql.ecoTable}.ECO
         FROM ${SETTINGS.mysql.allTable}
         inner join ${SETTINGS.mysql.allPlayers} as t1 on WhiteID = t1.id
@@ -55,7 +55,7 @@ const searchPlayerOpeningGame = async (
     query +=
       "\norder by Year DESC, Month DESC, Day DESC,Event, Round desc, White, Black LIMIT 10000";
   }
-  return await execSearch<Game>(query, parameters);
+  return await execQuery<Game>(query, parameters);
 };
 
 export default searchPlayerOpeningGame;

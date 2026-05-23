@@ -1,6 +1,6 @@
 import { Game, SearchGameParameters } from "..";
 import SETTINGS from "../../../settings";
-import execSearch from "../execSearch";
+import execQuery from "../execQuery";
 import fulltextName from "../tools/fulltextName";
 
 const searchGames = async (object: SearchGameParameters) => {
@@ -242,7 +242,7 @@ const searchGames = async (object: SearchGameParameters) => {
   query +=
     " order BY year DESC,month DESC,day DESC,Event,Round desc, White, Black limit 10000";
 
-  return execSearch<Game>(query, parameters);
+  return execQuery<Game>(query, parameters);
 };
 
 export default searchGames;
