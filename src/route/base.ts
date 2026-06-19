@@ -3,7 +3,7 @@ import type { FastifyPluginCallback } from "fastify";
 
 import SETTINGS from "../app/settings";
 
-type FileMetaData = {
+type FileMetadata = {
   description?: string;
   modifiedTime: string;
   name: string;
@@ -14,9 +14,9 @@ type FileMetaData = {
 const getFilesInFolder = async (
   token: string,
   folderId: string,
-): Promise<FileMetaData[]> => {
+): Promise<FileMetadata[]> => {
   const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,modifiedTime,webViewLink,size,description)&key=${token}`;
-  const response = await axios.get<{ files: FileMetaData[] }>(url);
+  const response = await axios.get<{ files: FileMetadata[] }>(url);
   return response.data.files;
 };
 

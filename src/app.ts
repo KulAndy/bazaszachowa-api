@@ -7,7 +7,7 @@ import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import staticPlugin from "@fastify/static";
 import Fastify from "fastify";
-import cron from "node-cron";
+import { schedule } from "node-cron";
 
 import baseRouter from "./route/base";
 import gameRouter from "./route/game";
@@ -52,7 +52,7 @@ app.all("/", () => {
   return "API";
 });
 
-cron.schedule("0 0 * * *", async () => {
+schedule("0 0 * * *", async () => {
   try {
     const files = await fs.promises.readdir("uploads");
 

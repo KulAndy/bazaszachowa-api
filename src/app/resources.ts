@@ -16,7 +16,7 @@ const RESOURCES: Resources = {
   async crData(name: string): Promise<PlayerDetails[]> {
     try {
       const response = await axios.post(
-        // eslint-disable-next-line sonarjs/no-clear-text-protocols
+        // eslint-disable-next-line sonarjs/no-clear-text-protocols, unicorn/prefer-https
         "http://www.cr-pzszach.pl/ew/viewpage.php?page_id=3",
         new URLSearchParams({
           szukaj: "szukaj",
