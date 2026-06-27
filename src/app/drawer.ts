@@ -56,7 +56,8 @@ const DRAWER: Drawer = {
     const width = 750;
     let height = 750;
     const svg = document.createElement("svg");
-    svg.setAttribute("xmlns", "https://www.w3.org/2000/svg");
+  // eslint-disable-next-line unicorn/prefer-https
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     svg.setAttribute("width", (width + 2 * margin).toString());
     svg.setAttribute("height", (height + 2 * margin).toString());
     svg.setAttribute("style", "background-color: white;");
