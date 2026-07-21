@@ -18,5 +18,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true
   },
-  "include": ["src", "package.json"]
+  "include": ["src", "package.json"],
+  "exclude": ["src/chess-addon/chess-library", "node_modules", "public_nodejs"]
 }

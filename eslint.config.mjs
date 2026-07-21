@@ -1,4 +1,4 @@
-import { defineConfig } from "eslint/config";
+import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import pluginN from "eslint-plugin-n";
@@ -11,6 +11,7 @@ import perfectionist from "eslint-plugin-perfectionist";
 import * as regexpPlugin from "eslint-plugin-regexp";
 
 export default defineConfig([
+  globalIgnores(["src/chess-addon/*"]),
   tseslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
   tseslint.configs.strict,
