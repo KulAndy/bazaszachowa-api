@@ -51,12 +51,16 @@ const DRAWER: Drawer = {
   },
 
   eloSVG: (data: EloData[], player: string): string => {
+    if (data.length < 2) {
+      throw new Error("Too short data");
+    }
+
     const header = 10;
     const margin = 50;
     const width = 750;
     let height = 750;
     const svg = document.createElement("svg");
-  // eslint-disable-next-line unicorn/prefer-https
+    // eslint-disable-next-line unicorn/prefer-https
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     svg.setAttribute("width", (width + 2 * margin).toString());
     svg.setAttribute("height", (height + 2 * margin).toString());
