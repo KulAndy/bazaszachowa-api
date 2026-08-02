@@ -1,4 +1,4 @@
-const assert = require("assert").strict;
+const assert = require("node:assert").strict;
 const addon = require("./src/chess-addon");
 
 console.log("Running tests for chess-addon...");

@@ -1,6 +1,6 @@
 const fulltextName = (name: string) => {
   let nameFul = name.replaceAll(/['`-]/g, " ");
-  if (nameFul[0] == "'" || nameFul[0] == "`") {
+  if (nameFul.startsWith("'") || nameFul.startsWith("`")) {
     nameFul = nameFul.slice(1);
   }
   nameFul = nameFul.replaceAll(/[^\d\sa-z]/gi, "");
