@@ -11,7 +11,6 @@ import perfectionist from "eslint-plugin-perfectionist";
 import * as regexpPlugin from "eslint-plugin-regexp";
 
 export default defineConfig([
-  globalIgnores(["src/chess-addon/*"]),
   tseslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
   tseslint.configs.strict,

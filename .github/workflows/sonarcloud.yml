@@ -31,5 +31,4 @@ jobs:
           args: >
             -Dsonar.projectKey=KulAndy_bazaszachowa-api
             -Dsonar.organization=kulandy
-            -Dsonar.exclusions=src/chess-addon/chess-library/**
           projectBaseDir: .
