@@ -9,18 +9,32 @@ const database = mysql.createPool({
   user: SETTINGS.mysql.user,
 });
 
+type SqlParameter = bigint | number | string | undefined;
+
+const normalizeParameter = (value: SqlParameter): SqlParameter => {
+  let result = value;
+  if (typeof value === "bigint") {
+    result = value.toString();
+  }
+
+  return result;
+};
+
 const execQuery = async <T extends object>(
   query: string,
-  parameters: (number | string | undefined)[] = [],
+  parameters: SqlParameter[] = [],
 ): Promise<T[]> => {
+  const sqlParameters = parameters.map((x) => normalizeParameter(x));
+
   return new Promise((resolve, reject) => {
     database.query(
       query,
-      parameters,
+      sqlParameters,
       (error: null | QueryError, result: object) => {
         if (error) {
+          console.error("MYSQL ERROR");
           console.error(query);
-          console.error(parameters);
+          console.error(sqlParameters);
           reject(error);
         }
 
@@ -28,7 +42,7 @@ const execQuery = async <T extends object>(
           resolve(result as T[]);
         } catch (error) {
           console.error(query);
-          console.error(parameters);
+          console.error(sqlParameters);
           // eslint-disable-next-line  @typescript-eslint/prefer-promise-reject-errors
           reject(error);
         }

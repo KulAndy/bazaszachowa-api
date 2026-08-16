@@ -20,6 +20,9 @@ type OpeningParameters = {
   player: string;
 };
 
+type SearchFenParameters = {
+  fen: string;
+};
 type SearchParameters = Record<string, string>;
 
 type SendVerificationCode = {
@@ -226,6 +229,45 @@ const router: FastifyPluginCallback = (app) => {
         }
       }
       return reply.code(code).send();
+    },
+  );
+
+  app.post<{ Body: SearchFenParameters }>(
+    "/searchFen",
+    {
+      schema: {
+        body: {
+          additionalProperties: false,
+          properties: {
+            fen: {
+              description: "Chess position in Forsyth-Edwards Notation (FEN)",
+              examples: [
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+              ],
+              minLength: 1,
+              pattern: String.raw`^([pnbrqkPNBRQK1-8]+\/){7}[pnbrqkPNBRQK1-8]+ [wb] (?:-|K?Q?k?q?) (?:-|[a-h][36]) \d+ \d+$`,
+              type: "string",
+            },
+          },
+          required: ["fen"],
+          type: "object",
+        },
+      },
+    },
+    async (request, reply) => {
+      const { fen } = request.body;
+
+      try {
+        console.time();
+        const result = await BASE.searchFen(fen);
+        console.timeEnd();
+
+        return reply.send(result);
+      } catch (error) {
+        console.error("Failed to fetch game", error);
+
+        return reply.code(400).send([]);
+      }
     },
   );
 };

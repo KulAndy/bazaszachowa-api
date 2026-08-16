@@ -1,5 +1,6 @@
 import execQuery from "./execQuery";
 import getGame from "./game/getGame";
+import searchFen from "./game/searchFen";
 import searchGames from "./game/searchGames";
 import searchPlayerOpeningGame from "./game/searchPlayerOpeningGame";
 import eloHistory from "./player/eloHistory";
@@ -52,6 +53,7 @@ const MYSQL_BASE = {
   getGame,
   minMaxYearElo,
   playerOpeningStats,
+  searchFen,
   searchGames,
   searchPlayer,
   searchPlayerOpeningGame,
