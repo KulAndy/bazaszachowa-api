@@ -4,7 +4,6 @@
   "description": "api of online chess database",
   "main": "app.js",
   "scripts": {
-    "build:addon": "./scripts/build-addon.sh",
     "build": "eslint src && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src",

@@ -19,5 +19,5 @@
     "isolatedModules": true
   },
   "include": ["src", "package.json"],
-  "exclude": ["src/chess-addon/chess-library", "node_modules", "public_nodejs"]
+  "exclude": ["node_modules", "public_nodejs"]
 }
