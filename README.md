@@ -11,3 +11,5 @@ należy uzupełnic plik app/settings.js
 <!-- Security scan triggered at 2026-08-31 16:21:26 -->
 
 <!-- Security scan triggered at 2026-08-31 16:25:10 -->
+
+<!-- Security scan triggered at 2026-08-31 18:15:03 -->
