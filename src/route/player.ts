@@ -99,7 +99,7 @@ const router: FastifyPluginCallback = (app) => {
 
         return response.code(400).send(null);
       } catch (error) {
-        logger.error({ error }, "plot failed");
+        logger.error({ error }, `plot failed for ${player}`);
         return response.code(404).send(null);
       }
     },
