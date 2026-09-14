@@ -2,6 +2,7 @@ import type { FastifyPluginCallback } from "fastify";
 
 import BASE from "../app/base";
 import CHESS from "../app/chess";
+import logger from "../app/logger";
 
 type Parameters_ = {
   base: string;
@@ -54,7 +55,7 @@ const router: FastifyPluginCallback = (app) => {
 
         return response.send(parsed);
       } catch (error) {
-        console.error("Failed to fetch game", error);
+        logger.error({ error }, "Failed to fetch game");
 
         return response.code(400).send(fallback);
       }

@@ -1,6 +1,7 @@
 import type { FastifyPluginCallback } from "fastify";
 
 import BASE from "../app/base";
+import logger from "../app/logger";
 
 type Parameters_ = {
   player: string;
@@ -26,7 +27,7 @@ const router: FastifyPluginCallback = (app) => {
 
         return result;
       } catch (error) {
-        console.error("searchPlayer failed", error);
+        logger.error({ error }, "searchPlayer failed");
         return response.code(503).send([]);
       }
     },

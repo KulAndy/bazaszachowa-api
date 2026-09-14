@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { FastifyPluginCallback } from "fastify";
 
+import logger from "../app/logger";
 import SETTINGS from "../app/settings";
 
 type FileMetadata = {
@@ -30,7 +31,7 @@ const router: FastifyPluginCallback = (app) => {
 
       return response.send(files);
     } catch (error) {
-      console.error("Google Drive fetch failed", error);
+      logger.error({ error }, "Google Drive fetch failed");
 
       return response.code(500).send({
         message: "Internal Server Error",

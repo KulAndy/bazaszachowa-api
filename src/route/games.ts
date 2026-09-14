@@ -12,6 +12,7 @@ import {
   verifyEmail,
 } from "../app/base/mysql/upload/verificationCode";
 import CHESS from "../app/chess";
+import logger from "../app/logger";
 import Settings from "../app/settings";
 
 type OpeningParameters = {
@@ -59,7 +60,7 @@ const router: FastifyPluginCallback = (app) => {
           table: parameters.table || "all",
         };
       } catch (error) {
-        console.error("searchGames failed", error);
+        logger.error({ error }, "searchGames failed");
 
         return response.code(503).send([]);
       }
@@ -101,7 +102,7 @@ const router: FastifyPluginCallback = (app) => {
 
         return parsed;
       } catch (error) {
-        console.error("searchPlayerOpeningGame failed", error);
+        logger.error({ error }, "searchPlayerOpeningGame failed");
 
         return response.code(503).send([]);
       }

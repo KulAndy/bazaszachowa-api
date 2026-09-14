@@ -1,5 +1,6 @@
 import mysql, { QueryError } from "mysql2";
 
+import logger from "../../logger";
 import SETTINGS from "../../settings";
 
 const database = mysql.createPool({
@@ -19,16 +20,20 @@ const execQuery = async <T extends object>(
       parameters,
       (error: null | QueryError, result: object) => {
         if (error) {
-          console.error(query);
-          console.error(parameters);
+          logger.error(
+            { err: error, parameters, query },
+            "Database query failed",
+          );
           reject(error);
         }
 
         try {
           resolve(result as T[]);
         } catch (error) {
-          console.error(query);
-          console.error(parameters);
+          logger.error(
+            { err: error, parameters, query },
+            "Database query failed",
+          );
           // eslint-disable-next-line  @typescript-eslint/prefer-promise-reject-errors
           reject(error);
         }

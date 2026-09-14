@@ -2,6 +2,7 @@ import type { FastifyPluginCallback } from "fastify";
 
 import BASE from "../app/base";
 import DRAWER from "../app/drawer";
+import logger from "../app/logger";
 import RESOURCES from "../app/resources";
 
 type PlayerParameters = {
@@ -33,7 +34,7 @@ const router: FastifyPluginCallback = (app) => {
       try {
         return await RESOURCES.crData(player);
       } catch (error) {
-        console.error("crData failed", error);
+        logger.error({ error }, "crData failed");
         return response.code(503).send([]);
       }
     },
@@ -58,7 +59,7 @@ const router: FastifyPluginCallback = (app) => {
       try {
         return await BASE.fideData(player);
       } catch (error) {
-        console.error("fideData failed", error);
+        logger.error({ error }, "fideData failed");
         return response.code(503).send([]);
       }
     },
@@ -98,7 +99,7 @@ const router: FastifyPluginCallback = (app) => {
 
         return response.code(400).send(null);
       } catch (error) {
-        console.error("plot failed", error);
+        logger.error({ error }, "plot failed");
         return response.code(404).send(null);
       }
     },

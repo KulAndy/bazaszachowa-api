@@ -9,6 +9,7 @@ import staticPlugin from "@fastify/static";
 import Fastify from "fastify";
 import { schedule } from "node-cron";
 
+import logger, { loggerConfig } from "./app/logger";
 import baseRouter from "./route/base";
 import gameRouter from "./route/game";
 import gamesRouter from "./route/games";
@@ -17,7 +18,8 @@ import playerRouter from "./route/player";
 import playersRouter from "./route/players";
 
 const app = Fastify({
-  logger: false,
+  disableRequestLogging: true,
+  logger: loggerConfig,
 });
 
 const port = 3000;
@@ -60,19 +62,20 @@ schedule("0 0 * * *", async () => {
       files.map((file) =>
         // eslint-disable-next-line security/detect-non-literal-fs-filename
         fs.promises.unlink(path.join("uploads", file)).catch((error) => {
-          console.error(`Error deleting file ${file}:`, error);
+          logger.error({ err: error, file }, "Error deleting file");
         }),
       ),
     );
   } catch (error) {
-    console.error("Error reading directory", error);
+    logger.error({ err: error }, "Error reading directory");
   }
 });
 
 app.listen({ host: "0.0.0.0", port }, (error, address) => {
   if (error) {
-    console.error("Error starting server", error);
+    logger.fatal({ err: error }, "Error starting server");
     throw error;
   }
-  console.info(`Server is listening on ${address}`);
+
+  logger.info({ address }, "Server is listening");
 });

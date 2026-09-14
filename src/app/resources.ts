@@ -1,6 +1,8 @@
 import axios from "axios";
 import iconv from "iconv-lite";
 
+import logger from "./logger";
+
 interface PlayerDetails {
   fide_id: string;
   id: string;
@@ -65,7 +67,10 @@ const RESOURCES: Resources = {
         return [];
       }
     } catch (error) {
-      console.error(error);
+      logger.error(
+        { error },
+        "Error fetching player details from cr-pzszach.pl",
+      );
       return [];
     }
   },

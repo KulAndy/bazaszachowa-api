@@ -1,3 +1,5 @@
+import logger from "./logger";
+
 interface Move {
   from: string;
   promotion?: string;
@@ -31,7 +33,7 @@ const CHESS = {
 
         result.push(move);
       } catch (error) {
-        console.error(error);
+        logger.error({ error }, "Error converting moves from binary to object");
         break;
       }
     }
