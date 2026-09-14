@@ -6,7 +6,7 @@ import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import staticPlugin from "@fastify/static";
-import Fastify from "fastify";
+import Fastify, { LogController } from "fastify";
 import { schedule } from "node-cron";
 
 import logger, { loggerConfig } from "./app/logger";
@@ -18,7 +18,9 @@ import playerRouter from "./route/player";
 import playersRouter from "./route/players";
 
 const app = Fastify({
-  disableRequestLogging: true,
+  logController: new LogController({
+    disableRequestLogging: () => true,
+  }),
   logger: loggerConfig,
 });
 
